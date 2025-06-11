@@ -2,8 +2,9 @@
 
 **BubbleUp** is a lightweight HTML/JavaScript tool for quickly adding speech bubbles to images. It was created because I couldn’t find a fast, no-frills tool that didn’t require a full image editing suite just to add a few callouts.
 
-Unlike heavy image editors, BubbleUp loads instantly, runs locally, and provides an intuitive, focused UI for speech bubble editing.
+Unlike heavy image editors, BubbleUp loads instantly, runs locally offline (or online with a webserver if you chose to), and provides an intuitive, focused UI for speech bubble editing.
 
+👉 **[Live Demo → https://sostrax.github.io/bubbleup/](https://sostrax.github.io/bubbleup/)**  
 ---
 
 ## 🚀 Features
