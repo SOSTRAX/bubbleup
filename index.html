@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BubbleUp</title>
+    <!-- Tailwind CSS for modern styling and responsiveness -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Apply the Inter font (or a sans-serif fallback) to the body */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* Basic canvas styling */
+        canvas {
+            display: block; /* Remove extra space below canvas */
+            width: 100%;    /* Canvas will fill its parent width */
+            height: 100%;   /* Canvas will fill its parent height */
+            cursor: grab;   /* Default cursor for panning */
+        }
+        /* Cursor changes for different interaction modes */
+        canvas.drawing-mode {
+            cursor: crosshair; /* Crosshair for drawing new bubbles */
+        }
+        canvas.dragging-mode {
+            cursor: grabbing; /* Grabbing hand for dragging existing bubbles or panning */
+        }
+        /* Hide scrollbars but allow content to scroll if needed (controlled by JS pan) */
+        .overflow-hidden {
+            overflow: hidden;
+        }
+
+        /* Modal specific styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col h-screen overflow-hidden">
+
+    <!-- Author name visible in top-left -->
+    <div style="position: fixed; top: 5px; left: 10px; font-size: 11px; font-family: sans-serif; color: #555; z-index: 10000; pointer-events: none;">
+      © 2025 Michael Dietz · SOSTRAX
+
+    </div>
+
+    <!-- Hidden project/license/contact info -->
+    <div style="display: none;">
+      <section>
+        <h2>About This Project</h2>
+        <p><strong>Project:</strong> My First HTML Project</p>
+        <p><strong>Author:</strong> Your Name</p>
+        <p>This project is a simple HTML page created to demonstrate my ability to design clean, semantic web content.</p>
+        <p><strong>License:</strong> MIT License — free to use with attribution. See https://opensource.org/licenses/MIT</p>
+        <p>If you’re interested in working together or want to know more, feel free to contact me: your.email@example.com</p>
+        <p>View this project on GitHub: https://github.com/yourusername/your-repo-name</p>
+      </section>
+    </div>
+
+
+
+
+    <!-- Main Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white shadow-lg z-10">
+        <h1 class="text-3xl font-bold text-center">BubbleUp</h1>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow flex flex-col md:flex-row overflow-hidden">
+        <!-- Control Panel -->
+        <div class="bg-white p-4 shadow-md md:w-64 flex-shrink-0 flex flex-col space-y-2 overflow-y-auto">
+            <h2 class="text-xl font-semibold mb-2 text-gray-800">Tools</h2>
+
+            <!-- Image Upload -->
+            <div>
+                <label for="imageUpload" class="block text-sm font-medium text-gray-700 mb-1">Upload Image</label>
+                <input type="file" id="imageUpload" accept="image/*"
+                    class="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100 cursor-pointer"
+                >
+            </div>
+
+            <!-- Create Speech Bubble Button -->
+            <button id="createSpeechBubbleBtn"
+                class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105"
+            >
+                Create Speech Bubble
+            </button>
+
+            <!-- Save Image Button -->
+            <button id="saveImageBtn"
+                class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105"
+            >
+                Save Edited Image
+            </button>
+
+            <!-- Save Options -->
+            <div>
+                <input type="checkbox" id="saveImageWithinBounds" checked
+                    class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                >
+                <label for="saveImageWithinBounds" class="text-sm font-medium text-gray-700">Save within Original Image Bounds</label>
+            </div>
+
+            <!-- How To Button -->
+            <button id="howToBtn"
+                class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105"
+            >
+                How To Use
+            </button>
+
+            <!-- Clear Canvas Button -->
+            <button id="clearCanvasBtn"
+                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105"
+            >
+                Clear Canvas
+            </button>
+
+            <!-- Zoom Controls -->
+            <div>
+                <h3 class="text-lg font-semibold mb-1 text-gray-800">Zoom</h3>
+                <div class="flex items-center space-x-2">
+                    <button id="zoomOutBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 rounded-lg text-lg">-</button>
+                    <span id="zoomLevel" class="text-gray-700">100%</span>
+                    <button id="zoomInBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 rounded-lg text-lg">+</button>
+                    <button id="resetZoomBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 rounded-lg text-sm">Reset</button>
+                </div>
+            </div>
+
+            <!-- Debugging Info (Optional) -->
+            <div class="mt-4 p-2 bg-gray-50 rounded-md text-sm text-gray-600">
+                <h3 class="font-semibold">Debug Info:</h3>
+                <p>Mode: <span id="currentMode">idle</span></p>
+                <p>Selected Bubble: <span id="selectedBubbleDebug">None</span></p>
+            </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div id="canvasContainer" class="flex-grow bg-gray-200 relative overflow-hidden flex justify-center items-center">
+            <canvas id="imageCanvas" class="bg-white rounded-lg shadow-xl"></canvas>
+        </div>
+    </main>
+
+    <!-- Speech Bubble Edit Modal -->
+    <div id="speechBubbleModal" class="modal-overlay hidden">
+        <div class="modal-content w-full md:w-2/3 lg:w-1/2 p-6">
+            <h2 id="speechBubbleModalTitle" class="text-2xl font-bold mb-2 text-gray-800">Edit Speech Bubble</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                <div>
+                    <label for="speechBubbleTextInput" class="block text-sm font-medium text-gray-700 mb-1">Text:</label>
+                    <textarea id="speechBubbleTextInput" rows="2"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                        placeholder="Enter speech bubble text..."
+                    ></textarea>
+                </div>
+
+                <div>
+                    <label for="bubbleFontSizeInput" class="block text-sm font-medium text-gray-700 mb-1">Font Size:</label>
+                    <input type="number" id="bubbleFontSizeInput" value="24" min="8" max="100"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    >
+                </div>
+
+                <div>
+                    <label for="bubbleFontFamilySelect" class="block text-sm font-medium text-gray-700 mb-1">Font Family:</label>
+                    <select id="bubbleFontFamilySelect"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    >
+                        <option value="Arial">Arial</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Helvetica">Helvetica</option>
+                        <option value="Tahoma">Tahoma</option>
+                        <option value="Trebuchet MS">Trebuchet MS</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Courier New">Courier New</option>
+                        <option value="Brush Script MT">Brush Script MT</option>
+                        <option value="Pacifico">Pacifico</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="bubbleRotationInput" class="block text-sm font-medium text-gray-700 mb-1">Rotation (degrees):</label>
+                    <input type="number" id="bubbleRotationInput" value="0" min="-180" max="180"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    >
+                </div>
+
+                <div>
+                    <label for="bubbleLineThicknessInput" class="block text-sm font-medium text-gray-700 mb-1">Line Thickness:</label>
+                    <input type="number" id="bubbleLineThicknessInput" value="2" min="1" max="10"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    >
+                </div>
+
+                <div>
+                    <label for="bubbleTailOriginSelect" class="block text-sm font-medium text-gray-700 mb-1">Tail Origin Corner:</label>
+                    <select id="bubbleTailOriginSelect"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    >
+                        <option value="none">None</option>
+                        <option value="topLeft">Top-Left</option>
+                        <option value="topRight">Top-Right</option>
+                        <option value="bottomLeft">Bottom-Left</option>
+                        <option value="bottomRight">Bottom-Right</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="bubbleFillColorInput" class="block text-sm font-medium text-gray-700 mb-1">Bubble Color:</label>
+                    <input type="color" id="bubbleFillColorInput" value="#FFFFFF"
+                        class="mt-1 block w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 cursor-pointer"
+                    >
+                </div>
+                <div>
+                    <label for="bubbleFillOpacityInput" class="block text-sm font-medium text-gray-700 mb-1">Bubble Opacity (%):</label>
+                    <input type="range" id="bubbleFillOpacityInput" value="100" min="0" max="100"
+                        class="mt-1 block w-full"
+                    >
+                    <span id="bubbleFillOpacityValue" class="text-xs text-gray-500">100%</span>
+                </div>
+
+                <div>
+                    <label for="borderColorInput" class="block text-sm font-medium text-gray-700 mb-1">Border Color:</label>
+                    <input type="color" id="borderColorInput" value="#000000"
+                        class="mt-1 block w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 cursor-pointer"
+                    >
+                </div>
+                <div>
+                    <label for="borderOpacityInput" class="block text-sm font-medium text-gray-700 mb-1">Border Opacity (%):</label>
+                    <input type="range" id="borderOpacityInput" value="100" min="0" max="100"
+                        class="mt-1 block w-full"
+                    >
+                    <span id="borderOpacityValue" class="text-xs text-gray-500">100%</span>
+                </div>
+
+                <div>
+                    <label for="fontColorInput" class="block text-sm font-medium text-gray-700 mb-1">Font Color:</label>
+                    <input type="color" id="fontColorInput" value="#000000"
+                        class="mt-1 block w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 cursor-pointer"
+                    >
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-3">
+                <button id="deleteSpeechBubbleBtn"
+                    class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105"
+                >
+                    Delete Bubble
+                </button>
+                <button id="saveSpeechBubbleBtn"
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105"
+                >
+                    Save Changes
+                </button>
+                <button id="cancelSpeechBubbleBtn"
+                    class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105"
+                >
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="messageModal" class="modal-overlay hidden">
+        <div class="modal-content p-6 text-center">
+            <h3 id="messageModalTitle" class="text-xl font-bold mb-2"></h3>
+            <p id="messageModalText" class="mb-3 whitespace-pre-wrap"></p>
+            <button id="closeMessageModalBtn"
+                class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105"
+            >
+                OK
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const imageCanvas = document.getElementById('imageCanvas');
+        const ctx = imageCanvas.getContext('2d');
+        const imageUpload = document.getElementById('imageUpload');
+        const createSpeechBubbleBtn = document.getElementById('createSpeechBubbleBtn');
+        const saveImageBtn = document.getElementById('saveImageBtn');
+        const saveImageWithinBoundsCheckbox = document.getElementById('saveImageWithinBounds');
+        const clearCanvasBtn = document.getElementById('clearCanvasBtn');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const resetZoomBtn = document.getElementById('resetZoomBtn'); // New: Reset Zoom Button
+        const zoomLevelSpan = document.getElementById('zoomLevel');
+        const currentModeSpan = document.getElementById('currentMode');
+        const selectedBubbleDebugSpan = document.getElementById('selectedBubbleDebug');
+        const howToBtn = document.getElementById('howToBtn'); // New: How To Button
+
+        const speechBubbleModal = document.getElementById('speechBubbleModal');
+        const speechBubbleModalTitle = document.getElementById('speechBubbleModalTitle');
+        const speechBubbleTextInput = document.getElementById('speechBubbleTextInput');
+        const bubbleFontSizeInput = document.getElementById('bubbleFontSizeInput');
+        const bubbleFontFamilySelect = document.getElementById('bubbleFontFamilySelect');
+        const bubbleRotationInput = document.getElementById('bubbleRotationInput');
+        const bubbleLineThicknessInput = document.getElementById('bubbleLineThicknessInput');
+        const bubbleTailOriginSelect = document.getElementById('bubbleTailOriginSelect');
+        const bubbleFillColorInput = document.getElementById('bubbleFillColorInput');
+        const bubbleFillOpacityInput = document.getElementById('bubbleFillOpacityInput');
+        const bubbleFillOpacityValueSpan = document.getElementById('bubbleFillOpacityValue');
+        const borderColorInput = document.getElementById('borderColorInput');
+        const borderOpacityInput = document.getElementById('borderOpacityInput');
+        const borderOpacityValueSpan = document.getElementById('borderOpacityValue');
+        const fontColorInput = document.getElementById('fontColorInput');
+        const saveSpeechBubbleBtn = document.getElementById('saveSpeechBubbleBtn');
+        const cancelSpeechBubbleBtn = document.getElementById('cancelSpeechBubbleBtn');
+        const deleteSpeechBubbleBtn = document.getElementById('deleteSpeechBubbleBtn');
+
+        const messageModal = document.getElementById('messageModal');
+        const messageModalTitle = document.getElementById('messageModalTitle');
+        const messageModalText = document.getElementById('messageModalText');
+        const closeMessageModalBtn = document.getElementById('closeMessageModalBtn');
+
+        let originalImage = null; // Stores the original image for redrawing
+        let speechBubbles = []; // Array to store speech bubble objects
+        let currentDrawingBubble = null; // Temp storage for a new bubble being drawn
+        let selectedBubbleIndex = -1; // Index of the currently selected/edited bubble
+        let mode = 'idle'; // 'idle', 'drawing', 'dragging', 'panning', 'draggingTail', 'resizing'
+        let startPan = { x: 0, y: 0 }; // Start coordinates for panning
+        let offset = { x: 0, y: 0 }; // Current canvas offset for panning
+        let lastOffset = { x: 0, y: 0 }; // Last saved offset for continuous panning
+        let scale = 1; // Current zoom level
+        let lastMousePos = { x: 0, y: 0 }; // Last mouse position for dragging bubbles/tail
+
+        const DEFAULT_FONT_SIZE = 24;
+        const DEFAULT_FONT_FAMILY = 'Arial';
+        const DEFAULT_LINE_THICKNESS = 2;
+        const DEFAULT_FILL_COLOR = '#FFFFFF';
+        const DEFAULT_FILL_OPACITY = 100;
+        const DEFAULT_BORDER_COLOR = '#000000';
+        const DEFAULT_BORDER_OPACITY = 100;
+        const DEFAULT_FONT_COLOR = '#000000';
+        const DEFAULT_TAIL_LENGTH = 30; // Length of the speech bubble tail (intrinsic, unscaled)
+        const DEFAULT_TAIL_WIDTH = 20; // Width of the speech bubble tail base (intrinsic, unscaled)
+
+        // --- Utility Functions ---
+
+        /**
+         * Converts a hex color string and opacity to an RGBA string.
+         * @param {string} hex - The hex color string (e.g., "#RRGGBB").
+         * @param {number} opacity - The opacity as a percentage (0-100).
+         * @returns {string} The RGBA color string (e.g., "rgba(255,0,0,0.5)").
+         */
+        function hexToRgba(hex, opacity) {
+            if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) {
+                console.error("Invalid hex value or format provided to hexToRgba:", hex);
+                return 'rgba(0,0,0,1)'; // Default to opaque black on error
+            }
+            let r = 0, g = 0, b = 0;
+
+            // Handle shorthand hex values (e.g., #FFF)
+            if (hex.length === 4) {
+                r = parseInt(hex[1] + hex[1], 16);
+                g = parseInt(hex[2] + hex[2], 16);
+                b = parseInt(hex[3] + hex[3], 16);
+            } else if (hex.length === 7) {
+                // Standard hex values (e.g., #FFFFFF)
+                r = parseInt(hex.substring(1, 3), 16);
+                g = parseInt(hex.substring(3, 5), 16);
+                b = parseInt(hex.substring(5, 7), 16);
+            } else {
+                console.error("Invalid hex format length:", hex);
+                return 'rgba(0,0,0,1)'; // Default to opaque black on invalid format
+            }
+
+            const alpha = opacity / 100; // Convert percentage to 0-1 range
+            return `rgba(${r},${g},${b},${alpha})`;
+        }
+
+        /**
+         * Converts an RGBA color string to a hex color string and opacity.
+         * @param {string} rgba - The RGBA color string (e.g., "rgba(255,0,0,0.5)").
+         * @returns {{hex: string, opacity: number}} An object with hex color and opacity (0-100).
+         */
+        function rgbaToHexAndOpacity(rgba) {
+            if (!rgba || typeof rgba !== 'string' || !rgba.startsWith('rgba(')) {
+                console.error("Invalid RGBA value provided to rgbaToHexAndOpacity:", rgba);
+                return { hex: '#000000', opacity: 100 }; // Default to opaque black on error
+            }
+
+            const parts = rgba.substring(5, rgba.length - 1).split(',').map(Number);
+            if (parts.length !== 4) {
+                console.error("Invalid RGBA format parts:", rgba);
+                return { hex: '#000000', opacity: 100 }; // Default to opaque black
+            }
+
+            const r = parts[0];
+            const g = parts[1];
+            const b = parts[2];
+            const a = parts[3];
+
+            const toHex = (c) => {
+                const hex = Math.round(c).toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            };
+
+            const hex = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+            const opacity = Math.round(a * 100);
+
+            return { hex, opacity };
+        }
+
+        /** Shows a custom message modal. */
+        function showMessage(title, message) {
+            messageModalTitle.textContent = title;
+            messageModalText.textContent = message; // Use textContent for plain text
+            messageModal.classList.remove('hidden');
+        }
+
+        /** Hides the custom message modal. */
+        function hideMessage() {
+            messageModal.classList.add('hidden');
+        }
+
+        // --- Canvas Management ---
+
+        /** Resizes the canvas to fit its container and redraws content. */
+        function resizeCanvas() {
+            const container = document.getElementById('canvasContainer');
+            imageCanvas.width = container.clientWidth;
+            imageCanvas.height = container.clientHeight;
+            draw();
+        }
+
+        /** Clears the canvas and resets all drawing data. */
+        function clearCanvas() {
+            originalImage = null;
+            speechBubbles = [];
+            currentDrawingBubble = null;
+            selectedBubbleIndex = -1;
+            offset = { x: 0, y: 0 };
+            lastOffset = { x: 0, y: 0 };
+            scale = 1;
+            mode = 'idle';
+            updateDebugInfo();
+            draw();
+            showMessage("Canvas Cleared", "All content has been removed from the canvas.");
+        }
+
+        /** Updates the debug information displayed on the UI. */
+        function updateDebugInfo() {
+            currentModeSpan.textContent = mode;
+            selectedBubbleDebugSpan.textContent = selectedBubbleIndex !== -1 ? `Bubble ${selectedBubbleIndex}` : 'None';
+            zoomLevelSpan.textContent = `${Math.round(scale * 100)}%`;
+        }
+
+        /** Draws all elements (image, bubbles) on the canvas. */
+        function draw() {
+            ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+
+            ctx.save(); // Save context state before applying global transformations
+
+            // Apply global panning and zooming to the entire canvas content
+            ctx.translate(offset.x, offset.y);
+            ctx.scale(scale, scale);
+
+            // Calculate where the top-left of the original image should be drawn
+            // These are coordinates in the *current scaled/panned context*.
+            const imgDisplayWidth = originalImage ? originalImage.width : imageCanvas.width;
+            const imgDisplayHeight = originalImage ? originalImage.height : imageCanvas.height;
+            const imgDrawOffsetX = (imageCanvas.width / scale - imgDisplayWidth) / 2;
+            const imgDrawOffsetY = (imageCanvas.height / scale - imgDisplayHeight) / 2;
+
+
+            if (originalImage) {
+                // Draw original image at its calculated position within the scaled/panned context
+                ctx.drawImage(originalImage, imgDrawOffsetX, imgDrawOffsetY, originalImage.width, originalImage.height);
+            } else {
+                // If no image, draw a placeholder background
+                ctx.fillStyle = '#f0f0f0';
+                ctx.fillRect(imgDrawOffsetX, imgDrawOffsetY, imageCanvas.width / scale, imageCanvas.height / scale);
+                ctx.strokeStyle = '#cccccc';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(imgDrawOffsetX, imgDrawOffsetY, imageCanvas.width / scale, imageCanvas.height / scale);
+            }
+
+            // Translate the context again so that its (0,0) now aligns with the
+            // top-left of our "image-relative world coordinate" system.
+            // This is crucial for bubbles to use their stored image-relative coordinates directly.
+            ctx.translate(imgDrawOffsetX, imgDrawOffsetY);
+
+            // Draw speech bubbles
+            speechBubbles.forEach((bubble, index) => {
+                // drawSpeechBubbleOnCanvas now expects bubble.x/y to be image-relative world coordinates.
+                // The current ctx is already scaled and translated to the image's top-left.
+                // So, drawSpeechBubbleOnCanvas only needs to translate to the bubble's position
+                // and apply its own rotation.
+                drawSpeechBubbleOnCanvas(ctx, bubble, index === selectedBubbleIndex);
+            });
+
+            // Draw current drawing bubble if exists
+            if (currentDrawingBubble) {
+                drawSpeechBubbleOnCanvas(ctx, currentDrawingBubble, true); // Highlight as selected
+            }
+
+            ctx.restore(); // Restore context to original state
+        }
+
+
+        /**
+         * Draws a single speech bubble on the canvas.
+         * @param {CanvasRenderingContext2D} ctx - The 2D rendering context of the canvas (already globally scaled/panned and image-aligned).
+         * @param {Object} bubble - The speech bubble object to draw (contains intrinsic, image-relative world coordinates).
+         * @param {boolean} isSelected - True if the bubble is currently selected.
+         */
+        function drawSpeechBubbleOnCanvas(ctx, bubble, isSelected = false) {
+            ctx.save(); // Save context for this bubble's transformations
+
+            // Translate to the bubble's center (bubble.x,y are image-relative world coords).
+            // The canvas context is already aligned with the image's (0,0).
+            ctx.translate(bubble.x, bubble.y);
+            const rotationRadians = bubble.rotation * Math.PI / 180;
+            ctx.rotate(rotationRadians); // Apply rotation in radians
+
+            // --- Calculate bubble dimensions (intrinsic, for drawing) ---
+            // Font size and padding are intrinsic values, directly used.
+            ctx.font = `${bubble.fontSize}px ${bubble.fontFamily}`;
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'center';
+
+            const lines = bubble.text.split('\n');
+            let maxTextWidth = 0;
+            const textLineHeight = bubble.fontSize * 1.2; // Intrinsic line height
+            lines.forEach(line => {
+                const metrics = ctx.measureText(line);
+                maxTextWidth = Math.max(maxTextWidth, metrics.width);
+            });
+
+            const padding = (bubble.fontSize * 0.7); // Intrinsic padding
+            const bubbleDrawingWidth = maxTextWidth + 2 * padding;
+            const bubbleDrawingHeight = (lines.length * textLineHeight) + 2 * padding;
+
+            // Update bubble object with calculated intrinsic dimensions for hit detection
+            bubble.width = bubbleDrawingWidth;
+            bubble.height = bubbleDrawingHeight;
+
+            const radius = 10; // Intrinsic corner radius
+            const xLocal = -bubbleDrawingWidth / 2; // Local X relative to bubble's center
+            const yLocal = -bubbleDrawingHeight / 2; // Local Y relative to bubble's center
+            const halfTailWidth = DEFAULT_TAIL_WIDTH / 2; // Intrinsic tail width
+
+            ctx.beginPath();
+
+            const isTailEnabled = bubble.tailOriginCorner && bubble.tailOriginCorner !== 'none';
+            let tailTipLocalRotated = null;
+            if (isTailEnabled) {
+                // Calculate tail tip position relative to bubble center, and then un-rotate it
+                // to bring it into the bubble's current local, rotated context space.
+                const tailTipRelativeX = bubble.tailTipX - bubble.x;
+                const tailTipRelativeY = bubble.tailTipY - bubble.y;
+                tailTipLocalRotated = rotatePoint(tailTipRelativeX, tailTipRelativeY, -rotationRadians);
+            }
+
+            // Start point - always top-left corner logic (or tail if top-left)
+            if (isTailEnabled && bubble.tailOriginCorner === 'topLeft') {
+                ctx.moveTo(xLocal + halfTailWidth, yLocal); // Start on top edge, right of tail base
+                ctx.lineTo(tailTipLocalRotated.x, tailTipLocalRotated.y); // To tail tip
+                ctx.lineTo(xLocal, yLocal + halfTailWidth); // To left edge, below tail base
+            } else {
+                ctx.moveTo(xLocal + radius, yLocal); // Standard rounded top-left start
+            }
+
+            // Top Edge & Top-Right Corner / Tail
+            if (isTailEnabled && bubble.tailOriginCorner === 'topRight') {
+                // If not starting with topLeft tail, line to right of tail base
+                if (!(isTailEnabled && bubble.tailOriginCorner === 'topLeft')) {
+                    ctx.lineTo(xLocal + bubbleDrawingWidth - halfTailWidth, yLocal);
+                }
+                ctx.lineTo(tailTipLocalRotated.x, tailTipLocalRotated.y); // To tail tip
+                ctx.lineTo(xLocal + bubbleDrawingWidth, yLocal + halfTailWidth); // From tail end to right edge
+            } else { // Standard top edge and top-right corner
+                // Ensure path continues from previous point (either standard start or topLeft tail end)
+                ctx.lineTo(xLocal + bubbleDrawingWidth - radius, yLocal);
+                ctx.quadraticCurveTo(xLocal + bubbleDrawingWidth, yLocal, xLocal + bubbleDrawingWidth, yLocal + radius); // Top-right corner
+            }
+
+            // Right Edge & Bottom-Right Corner / Tail
+            if (isTailEnabled && bubble.tailOriginCorner === 'bottomRight') {
+                ctx.lineTo(xLocal + bubbleDrawingWidth, yLocal + bubbleDrawingHeight - halfTailWidth); // Line to above tail base
+                ctx.lineTo(tailTipLocalRotated.x, tailTipLocalRotated.y); // To tail tip
+                ctx.lineTo(xLocal + bubbleDrawingWidth - halfTailWidth, yLocal + bubbleDrawingHeight); // To bottom edge, left of tail base
+            } else { // Standard right edge and bottom-right corner
+                ctx.lineTo(xLocal + bubbleDrawingWidth, yLocal + bubbleDrawingHeight - radius); // Line to end of right edge
+                ctx.quadraticCurveTo(xLocal + bubbleDrawingWidth, yLocal + bubbleDrawingHeight, xLocal + bubbleDrawingWidth - radius, yLocal + bubbleDrawingHeight); // Bottom-right corner
+            }
+
+            // Bottom Edge & Bottom-Left Corner / Tail
+            if (isTailEnabled && bubble.tailOriginCorner === 'bottomLeft') {
+                ctx.lineTo(xLocal + halfTailWidth, yLocal + bubbleDrawingHeight); // Line to right of tail base
+                ctx.lineTo(tailTipLocalRotated.x, tailTipLocalRotated.y); // To tail tip
+                ctx.lineTo(xLocal, yLocal + bubbleDrawingHeight - halfTailWidth); // To left edge, above tail base
+            } else { // Standard bottom edge and bottom-left corner
+                ctx.lineTo(xLocal + radius, yLocal + bubbleDrawingHeight); // Line to start of bottom edge
+                ctx.quadraticCurveTo(xLocal, yLocal + bubbleDrawingHeight, xLocal, yLocal + bubbleDrawingHeight - radius); // Bottom-left corner
+            }
+
+            // Left Edge & Top-Left Corner (or closing the path if top-left tail was start)
+            if (!(isTailEnabled && bubble.tailOriginCorner === 'topLeft')) {
+                ctx.lineTo(xLocal, yLocal + radius); // Line to start of left edge
+                ctx.quadraticCurveTo(xLocal, yLocal, xLocal + radius, yLocal); // Top-left corner, connects back to original moveTo
+            }
+            // If top-left tail, the path started with moveTo and should naturally loop back.
+
+            ctx.closePath(); // Closes the path, connecting the last point to the first moveTo point.
+
+            const fillColor = hexToRgba(bubble.bubbleFillColor, bubble.bubbleFillOpacity);
+            const borderColor = hexToRgba(bubble.borderColor, bubble.borderOpacity);
+
+            ctx.lineWidth = bubble.lineThickness; // Intrinsic line thickness
+            ctx.fillStyle = fillColor;
+            ctx.strokeStyle = borderColor;
+            
+            ctx.fill();
+            ctx.stroke();
+
+            // Draw text
+            ctx.fillStyle = bubble.fontColor;
+            const textYOffset = yLocal + bubbleDrawingHeight / 2 - (lines.length * textLineHeight) / 2 + textLineHeight / 2;
+            lines.forEach((line, i) => {
+                ctx.fillText(line, 0, textYOffset + i * textLineHeight);
+            });
+
+            // Selection outline and handles.
+            if (isSelected) {
+                ctx.strokeStyle = 'rgba(0, 123, 255, 0.8)';
+                ctx.lineWidth = 3; // Intrinsic selection line thickness
+                ctx.strokeRect(xLocal, yLocal, bubbleDrawingWidth, bubbleDrawingHeight);
+
+                const handleSize = 8; // Intrinsic handle size
+                const halfHandleForHandles = handleSize / 2;
+                ctx.fillStyle = 'rgba(0, 123, 255, 1)';
+                
+                // Handles are drawn relative to the bubble's local, rotated context
+                ctx.fillRect(xLocal - halfHandleForHandles, yLocal - halfHandleForHandles, handleSize, handleSize);
+                ctx.fillRect(xLocal + bubbleDrawingWidth - halfHandleForHandles, yLocal - halfHandleForHandles, handleSize, handleSize);
+                ctx.fillRect(xLocal - halfHandleForHandles, yLocal + bubbleDrawingHeight - halfHandleForHandles, handleSize, handleSize);
+                ctx.fillRect(xLocal + bubbleDrawingWidth - halfHandleForHandles, yLocal + bubbleDrawingHeight - halfHandleForHandles, handleSize, handleSize);
+
+                if (isTailEnabled) {
+                    // Tail handle position is relative to bubble center, then un-rotated
+                    const tailTipRelativeX = bubble.tailTipX - bubble.x;
+                    const tailTipRelativeY = bubble.tailTipY - bubble.y;
+                    const tailHandleLocalRotated = rotatePoint(tailTipRelativeX, tailTipRelativeY, -rotationRadians);
+                    ctx.fillRect(tailHandleLocalRotated.x - halfHandleForHandles, tailHandleLocalRotated.y - halfHandleForHandles, handleSize, handleSize);
+                }
+            }
+
+            ctx.restore();
+        }
+
+        /**
+         * Rotates a point around the origin (0,0).
+         * @param {number} x - The x-coordinate of the point.
+         * @param {number} y - The y-coordinate of the point.
+         * @param {number} angle - The rotation angle in radians.
+         * @returns {{x: number, y: number}} The rotated point.
+         */
+        function rotatePoint(x, y, angle) {
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            return {
+                x: x * cos - y * sin,
+                y: x * sin + y * cos
+            };
+        }
+
+        // --- Event Handlers ---
+
+        /** Handles image file selection. */
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    originalImage = new Image();
+                    originalImage.onload = () => {
+                        // Reset offset and scale when a new image is loaded
+                        offset = { x: 0, y: 0 };
+                        lastOffset = { x: 0, y: 0 };
+                        scale = 1;
+                        draw(); // Redraw canvas with the new image
+                        showMessage("Image Loaded", "Your image has been successfully loaded.");
+                    };
+                    originalImage.onerror = () => {
+                        showMessage("Error", "Could not load image. Please ensure it's a valid image file.");
+                        originalImage = null; // Clear image if loading fails
+                        draw();
+                    };
+                    originalImage.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+            // Clear the input value so selecting the same file again triggers change event
+            e.target.value = '';
+        });
+
+        /** Initiates drawing a new speech bubble. */
+        createSpeechBubbleBtn.addEventListener('click', () => {
+            mode = 'drawing';
+            imageCanvas.classList.add('drawing-mode');
+            imageCanvas.classList.remove('dragging-mode');
+            updateDebugInfo();
+
+            // Calculate initial center in image-relative world coordinates
+            let initialX = (originalImage ? originalImage.width : imageCanvas.width) / 2;
+            let initialY = (originalImage ? originalImage.height : imageCanvas.height) / 2;
+
+            // Initialize a temporary bubble object with default values
+            currentDrawingBubble = {
+                x: initialX, // Image-relative world X
+                y: initialY, // Image-relative world Y
+                width: 0, // Will be calculated and stored intrinsically in saveSpeechBubbleBtn
+                height: 0, // Will be calculated and stored intrinsically in saveSpeechBubbleBtn
+                text: '',
+                fontSize: DEFAULT_FONT_SIZE,
+                fontFamily: DEFAULT_FONT_FAMILY,
+                rotation: 0,
+                lineThickness: DEFAULT_LINE_THICKNESS,
+                bubbleFillColor: DEFAULT_FILL_COLOR, // Hex string
+                bubbleFillOpacity: DEFAULT_FILL_OPACITY, // Percentage
+                borderColor: DEFAULT_BORDER_COLOR,     // Hex string
+                borderOpacity: DEFAULT_BORDER_OPACITY,   // Percentage
+                fontColor: DEFAULT_FONT_COLOR,
+                tailOriginCorner: 'none',
+                tailTipX: initialX, // Default tail tip to bubble center initially (image-relative world)
+                tailTipY: initialY
+            };
+            selectedBubbleIndex = -1; // No bubble selected when drawing a new one
+
+            // Immediately show the modal for text and style input
+            showSpeechBubbleModal(currentDrawingBubble);
+        });
+
+        /** Saves the edited image with all elements. */
+        saveImageBtn.addEventListener('click', () => {
+            if (!originalImage && speechBubbles.length === 0) {
+                showMessage("Nothing to Save", "There is no image or speech bubbles on the canvas to save.");
+                return;
+            }
+
+            const saveWithinBounds = saveImageWithinBoundsCheckbox.checked;
+
+            if (saveWithinBounds && !originalImage) {
+                showMessage("Error", "An image must be loaded to save within its original bounds.");
+                return;
+            }
+
+            let finalCanvas = document.createElement('canvas');
+            let finalCtx = finalCanvas.getContext('2d');
+
+            if (saveWithinBounds) {
+                finalCanvas.width = originalImage.width;
+                finalCanvas.height = originalImage.height;
+
+                // Draw original image at its native resolution (0,0)
+                finalCtx.drawImage(originalImage, 0, 0, originalImage.width, originalImage.height);
+
+                // For saving within bounds, we just draw bubbles with scale 1 and no offset.
+                // The bubble's (x,y) and tailTipX/Y are already image-relative world coordinates.
+                speechBubbles.forEach(bubble => {
+                    // drawSpeechBubbleOnCanvas now expects bubble.x/y to be image-relative world coordinates,
+                    // and will apply its own translate/rotate. No external scale/offset needed here.
+                    drawSpeechBubbleOnCanvas(finalCtx, bubble, false);
+                });
+
+                if (currentDrawingBubble) {
+                    drawSpeechBubbleOnCanvas(finalCtx, currentDrawingBubble, false);
+                }
+
+            } else {
+                // Save what's currently visible on the main canvas (including current zoom and pan)
+                finalCanvas.width = imageCanvas.width;
+                finalCanvas.height = imageCanvas.height;
+
+                finalCtx.save();
+                finalCtx.translate(offset.x, offset.y);
+                finalCtx.scale(scale, scale);
+
+                // Calculate where the top-left of the original image is in this scaled/panned context
+                const imgDisplayWidth = originalImage ? originalImage.width : imageCanvas.width;
+                const imgDisplayHeight = originalImage ? originalImage.height : imageCanvas.height;
+                const imgDrawOffsetX = (imageCanvas.width / scale - imgDisplayWidth) / 2;
+                const imgDrawOffsetY = (imageCanvas.height / scale - imgDisplayHeight) / 2;
+
+                if (originalImage) {
+                    finalCtx.drawImage(originalImage, imgDrawOffsetX, imgDrawOffsetY, originalImage.width, originalImage.height);
+                } else {
+                    finalCtx.fillStyle = '#f0f0f0';
+                    finalCtx.fillRect(imgDrawOffsetX, imgDrawOffsetY, imageCanvas.width / scale, imageCanvas.height / scale);
+                    finalCtx.strokeStyle = '#cccccc';
+                    finalCtx.lineWidth = 2;
+                    finalCtx.strokeRect(imgDrawOffsetX, imgDrawOffsetY, imageCanvas.width / scale, imageCanvas.height / scale);
+                }
+
+                // Translate to align with the image-relative world coordinates before drawing bubbles
+                finalCtx.translate(imgDrawOffsetX, imgDrawOffsetY);
+
+                speechBubbles.forEach(bubble => {
+                    drawSpeechBubbleOnCanvas(finalCtx, bubble, false);
+                });
+                if (currentDrawingBubble) {
+                    drawSpeechBubbleOnCanvas(finalCtx, currentDrawingBubble, false);
+                }
+                finalCtx.restore();
+            }
+
+            const dataURL = finalCanvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = saveWithinBounds ? 'edited_image_cropped.png' : 'edited_image_full_view.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showMessage("Image Saved", "Your edited image has been downloaded.");
+        });
+
+        clearCanvasBtn.addEventListener('click', clearCanvas);
+
+        zoomInBtn.addEventListener('click', () => {
+            scale = Math.min(scale + 0.1, 5); // Max zoom 500%
+            updateDebugInfo();
+            draw();
+        });
+
+        zoomOutBtn.addEventListener('click', () => {
+            scale = Math.max(scale - 0.1, 0.2); // Min zoom 20%
+            updateDebugInfo();
+            draw();
+        });
+
+        // New: Reset Zoom Button
+        resetZoomBtn.addEventListener('click', () => {
+            scale = 1;
+            offset = { x: 0, y: 0 };
+            lastOffset = { x: 0, y: 0 };
+            updateDebugInfo();
+            draw();
+        });
+
+        // New: How To Use Button
+        howToBtn.addEventListener('click', () => {
+            const howToTitle = "How to Use BubbleUp";
+            const howToText = `
+1. Upload Image: Click 'Upload Image' to choose your base image.
+
+2. Create Bubble: Click 'Create Speech Bubble' to open the editor. Enter text, choose styles, and click 'Save Changes'. A new bubble appears centered.
+
+3. Move/Resize Bubbles: Drag the bubble body to reposition. Drag the small squares at the corners to resize. Drag the small square at the tail tip to adjust the tail.
+
+4. Edit Bubble: Double-click an existing bubble to reopen its editor.
+
+5. Pan: Drag the canvas background to pan around, especially when zoomed in.
+
+6. Zoom: Use '+' and '-' buttons to zoom in/out, or 'Reset' to return to 100%.
+
+7. Save: 'Save Edited Image' saves your work. Check 'Save within Original Image Bounds' to crop the output to the original image's dimensions.
+
+8. Clear Canvas: Removes all images and bubbles.
+            `.trim();
+            showMessage(howToTitle, howToText);
+        });
+
+        // --- Mouse and Touch Interactions ---
+
+        let isDraggingCanvas = false;
+        let isDraggingBubble = false;
+        let isResizingBubble = false;
+        let isDraggingTail = false;
+        let resizeHandle = null; // 'topLeft', 'topRight', etc.
+
+        // Helper function to get mouse coordinates in image-relative world space
+        function getMouseWorldCoordinates(e) {
+            const rect = imageCanvas.getBoundingClientRect();
+            // Mouse position relative to canvas element (pixels)
+            const mouseClientX = e.clientX - rect.left;
+            const mouseClientY = e.clientY - rect.top;
+
+            // Convert to canvas's "global scaled/panned" coordinate system
+            const canvasGlobalX = (mouseClientX - offset.x) / scale;
+            const canvasGlobalY = (mouseClientY - offset.y) / scale;
+
+            // Get the top-left of the image in "canvas global scaled/panned" system.
+            const imgDisplayWidth = originalImage ? originalImage.width : imageCanvas.width;
+            const imgDisplayHeight = originalImage ? originalImage.height : imageCanvas.height;
+            const imgDrawOffsetX = (imageCanvas.width / scale - imgDisplayWidth) / 2;
+            const imgDrawOffsetY = (imageCanvas.height / scale - imgDisplayHeight) / 2;
+
+            // Convert to "image-relative world coordinates"
+            const mouseX = canvasGlobalX - imgDrawOffsetX;
+            const mouseY = canvasGlobalY - imgDrawOffsetY;
+            return { x: mouseX, y: mouseY };
+        }
+
+        imageCanvas.addEventListener('mousedown', (e) => {
+            // Get mouse position in image-relative world coordinates
+            const { x: mouseX, y: mouseY } = getMouseWorldCoordinates(e);
+
+            // Reset all dragging states at the start of mousedown
+            selectedBubbleIndex = -1;
+            isDraggingBubble = false;
+            isResizingBubble = false;
+            isDraggingTail = false;
+            isDraggingCanvas = false;
+            resizeHandle = null;
+
+            // 1. Check for tail handle drag (most specific and highest priority)
+            for (let i = speechBubbles.length - 1; i >= 0; i--) {
+                const bubble = speechBubbles[i];
+                if (bubble.tailOriginCorner !== 'none' && bubble.tailTipX !== undefined && bubble.tailTipY !== undefined) {
+                    // Handle size should be intrinsic and scaled by current zoom level for hitbox detection
+                    const handleSize = 8; // Intrinsic size
+                    const scaledHandleSize = handleSize / scale; // Scaled for hit-detection in image-relative world coordinates
+                    const halfScaledHandle = scaledHandleSize / 2;
+
+                    // The stored tailTipX/Y are already in image-relative world coordinates
+                    // Check if mouse is within the handle's bounding box
+                    if (mouseX >= bubble.tailTipX - halfScaledHandle && mouseX <= bubble.tailTipX + halfScaledHandle &&
+                        mouseY >= bubble.tailTipY - halfScaledHandle && mouseY <= bubble.tailTipY + halfScaledHandle) {
+                         selectedBubbleIndex = i; // Select the bubble whose tail is being dragged
+                         isDraggingTail = true;
+                         lastMousePos = { x: mouseX, y: mouseY }; // Store image-relative world coordinates of mouse
+                         mode = 'draggingTail';
+                         imageCanvas.classList.add('dragging-mode');
+                         updateDebugInfo();
+                         draw(); // Redraw to highlight selected bubble and tail handle
+                         return; // Stop processing, we found our target
+                    }
+                }
+            }
+
+            // 2. Check for resize handles (next most specific)
+            // Iterate through bubbles to check for resize handle hits
+            for (let i = speechBubbles.length - 1; i >= 0; i--) {
+                const bubble = speechBubbles[i];
+                // Calculate bubble's rectangle coordinates in image-relative world space
+                const bubbleRectX = bubble.x - bubble.width / 2;
+                const bubbleRectY = bubble.y - bubble.height / 2;
+
+                const handleSize = 8; // Intrinsic size
+                const scaledHandleSize = handleSize / scale; // Scaled for hit-detection
+                const halfScaledHandle = scaledHandleSize / 2;
+
+                const handles = {
+                    topLeft: { x: bubbleRectX, y: bubbleRectY },
+                    topRight: { x: bubbleRectX + bubble.width, y: bubbleRectY },
+                    bottomLeft: { x: bubbleRectX, y: bubbleRectY + bubble.height },
+                    bottomRight: { x: bubbleRectX + bubble.width, y: bubbleRectY + bubble.height }
+                };
+
+                for (const handleName in handles) {
+                    const hX = handles[handleName].x;
+                    const hY = handles[handleName].y;
+                    if (mouseX > hX - halfScaledHandle && mouseX < hX + halfScaledHandle &&
+                        mouseY > hY - halfScaledHandle && mouseY < hY + halfScaledHandle) {
+                        selectedBubbleIndex = i; // Select the bubble being resized
+                        isResizingBubble = true;
+                        resizeHandle = handleName;
+                        lastMousePos = { x: mouseX, y: mouseY };
+                        mode = 'resizing';
+                        imageCanvas.classList.add('dragging-mode');
+                        updateDebugInfo();
+                        draw(); // Redraw to show selection
+                        return;
+                    }
+                }
+            }
+
+
+            // 3. Check for general bubble drag (if not tail or resize handle)
+            for (let i = speechBubbles.length - 1; i >= 0; i--) {
+                const bubble = speechBubbles[i];
+                // Simple AABB check (axis-aligned bounding box) for click detection in image-relative world space
+                const minX = bubble.x - bubble.width / 2;
+                const maxX = bubble.x + bubble.width / 2;
+                const minY = bubble.y - bubble.height / 2;
+                const maxY = bubble.y + bubble.height / 2;
+
+                if (mouseX >= minX && mouseX <= maxX && mouseY >= minY && mouseY <= maxY) {
+                    selectedBubbleIndex = i;
+                    isDraggingBubble = true;
+                    lastMousePos = { x: mouseX, y: mouseY };
+                    mode = 'dragging';
+                    imageCanvas.classList.add('dragging-mode');
+                    updateDebugInfo();
+                    draw(); // Redraw to show selection
+                    return;
+                }
+            }
+
+            // 4. If nothing else was clicked, start canvas panning
+            isDraggingCanvas = true;
+            startPan = { x: e.clientX - imageCanvas.getBoundingClientRect().left, y: e.clientY - imageCanvas.getBoundingClientRect().top };
+            lastOffset = { ...offset };
+            mode = 'panning';
+            imageCanvas.classList.add('dragging-mode');
+            updateDebugInfo();
+        });
+
+        imageCanvas.addEventListener('mousemove', (e) => {
+            if (!isDraggingCanvas && !isDraggingBubble && !isResizingBubble && !isDraggingTail) return;
+
+            // Get mouse position in image-relative world coordinates
+            const { x: mouseX, y: mouseY } = getMouseWorldCoordinates(e);
+
+            // Define current image bounds (image-relative world coordinates)
+            const imgWidth = originalImage ? originalImage.width : imageCanvas.width;
+            const imgHeight = originalImage ? originalImage.height : imageCanvas.height;
+            const imageWorldLeft = 0;
+            const imageWorldTop = 0;
+            const imageWorldRight = imgWidth;
+            const imageWorldBottom = imgHeight;
+
+            if (saveImageWithinBoundsCheckbox.checked && originalImage) {
+                if (mode === 'draggingTail' && isDraggingTail && selectedBubbleIndex !== -1) {
+                    const bubble = speechBubbles[selectedBubbleIndex];
+                    // Clamp tail tip to image world bounds
+                    bubble.tailTipX = Math.max(imageWorldLeft, Math.min(imageWorldRight, mouseX));
+                    bubble.tailTipY = Math.max(imageWorldTop, Math.min(imageWorldBottom, mouseY));
+                    draw();
+                } else if (mode === 'resizing' && isResizingBubble && selectedBubbleIndex !== -1 && resizeHandle) {
+                    const bubble = speechBubbles[selectedBubbleIndex];
+                    const dx = (mouseX - lastMousePos.x); // delta in image-relative world coordinates
+                    const dy = (mouseY - lastMousePos.y);
+
+                    let newWidth = bubble.width;
+                    let newHeight = bubble.height;
+                    let newX = bubble.x; // bubble center (image-relative world)
+                    let newY = bubble.y;
+
+                    // Adjust width/height based on resize handle
+                    switch (resizeHandle) {
+                        case 'topLeft':
+                            newWidth -= dx; newHeight -= dy;
+                            newX += dx / 2; newY += dy / 2;
+                            break;
+                        case 'topRight':
+                            newWidth += dx; newHeight -= dy;
+                            newX += dx / 2; newY += dy / 2;
+                            break;
+                        case 'bottomLeft':
+                            newWidth -= dx; newHeight += dy;
+                            newX += dx / 2; newY += dy / 2;
+                            break;
+                        case 'bottomRight':
+                            newWidth += dx; newHeight += dy;
+                            newX += dx / 2; newY += dy / 2;
+                            break;
+                    }
+
+                    // Apply temporary bounds for width/height
+                    newWidth = Math.max(20, newWidth);
+                    newHeight = Math.max(20, newHeight);
+
+                    // Calculate potential new bubble bounds for clamping (image-relative world)
+                    let potentialMinX = newX - newWidth / 2;
+                    let potentialMaxX = newX + newWidth / 2;
+                    let potentialMinY = newY - newHeight / 2;
+                    let potentialMaxY = newY + newHeight / 2;
+
+                    // Clamp potential bubble position and adjust newX, newY, newWidth, newHeight
+                    if (potentialMinX < imageWorldLeft) {
+                        newWidth -= (imageWorldLeft - potentialMinX);
+                        newX = imageWorldLeft + newWidth / 2;
+                    }
+                    if (potentialMaxX > imageWorldRight) {
+                        newWidth -= (potentialMaxX - imageWorldRight);
+                        newX = imageWorldRight - newWidth / 2;
+                    }
+                    if (potentialMinY < imageWorldTop) {
+                        newHeight -= (imageWorldTop - potentialMinY);
+                        newY = imageWorldTop + newHeight / 2;
+                    }
+                    if (potentialMaxY > imageWorldBottom) {
+                        newHeight -= (potentialMaxY - imageWorldBottom);
+                        newY = imageWorldBottom - newHeight / 2;
+                    }
+
+                    bubble.width = Math.max(20, newWidth); // Apply min width again after clamping
+                    bubble.height = Math.max(20, newHeight); // Apply min height again after clamping
+                    bubble.x = newX;
+                    bubble.y = newY;
+
+                    lastMousePos = { x: mouseX, y: mouseY };
+                    draw();
+
+                } else if (mode === 'dragging' && isDraggingBubble && selectedBubbleIndex !== -1) {
+                    const bubble = speechBubbles[selectedBubbleIndex];
+                    const dx = mouseX - lastMousePos.x;
+                    const dy = mouseY - lastMousePos.y;
+
+                    let newBubbleX = bubble.x + dx;
+                    let newBubbleY = bubble.y + dy;
+
+                    // Clamp bubble center within image bounds (image-relative world)
+                    newBubbleX = Math.max(imageWorldLeft + bubble.width / 2, Math.min(imageWorldRight - bubble.width / 2, newBubbleX));
+                    newBubbleY = Math.max(imageWorldTop + bubble.height / 2, Math.min(imageWorldBottom - bubble.height / 2, newBubbleY));
+
+                    // Adjust dx, dy based on clamping
+                    const actualDx = newBubbleX - bubble.x;
+                    const actualDy = newBubbleY - bubble.y;
+
+                    bubble.x = newBubbleX;
+                    bubble.y = newBubbleY;
+
+                    if (!isDraggingTail) { // Prevent conflicting updates if tail is being separately dragged
+                        bubble.tailTipX += actualDx;
+                        bubble.tailTipY += actualDy;
+                    }
+                    lastMousePos = { x: mouseX, y: mouseY };
+                    draw();
+                } else if (mode === 'panning' && isDraggingCanvas) {
+                    // Panning operates on canvas screen coordinates, not image-relative world coordinates
+                    offset.x = lastOffset.x + (e.clientX - imageCanvas.getBoundingClientRect().left - startPan.x);
+                    offset.y = lastOffset.y + (e.clientY - imageCanvas.getBoundingClientRect().top - startPan.y);
+
+                    // Clamp offset to keep original image within canvas view (if image exists)
+                    if (originalImage) {
+                        const currentImageScaledWidth = originalImage.width * scale;
+                        const currentImageScaledHeight = originalImage.height * scale;
+                        const centeredImageX = (imageCanvas.width - currentImageScaledWidth) / 2;
+                        const centeredImageY = (imageCanvas.height - currentImageScaledHeight) / 2;
+
+                        if (currentImageScaledWidth < imageCanvas.width) {
+                            offset.x = centeredImageX;
+                        } else {
+                            const minAllowedOffsetX = imageCanvas.width - currentImageScaledWidth - centeredImageX;
+                            const maxAllowedOffsetX = -centeredImageX;
+                            offset.x = Math.max(minAllowedOffsetX, Math.min(maxAllowedOffsetX, offset.x));
+                        }
+
+                        if (currentImageScaledHeight < imageCanvas.height) {
+                            offset.y = centeredImageY;
+                        } else {
+                            const minAllowedOffsetY = imageCanvas.height - currentImageScaledHeight - centeredImageY;
+                            const maxAllowedOffsetY = -centeredImageY;
+                            offset.y = Math.max(minAllowedOffsetY, Math.min(maxAllowedOffsetY, offset.y));
+                        }
+                    } // If no image, allow free panning
+                    draw();
+                }
+            } else { // If saveWithinBounds is NOT checked or no originalImage, allow free movement
+                if (mode === 'draggingTail' && isDraggingTail && selectedBubbleIndex !== -1) {
+                    const bubble = speechBubbles[selectedBubbleIndex];
+                    bubble.tailTipX = mouseX;
+                    bubble.tailTipY = mouseY;
+                    draw();
+                } else if (mode === 'resizing' && isResizingBubble && selectedBubbleIndex !== -1 && resizeHandle) {
+                    const bubble = speechBubbles[selectedBubbleIndex];
+                    const dx = (mouseX - lastMousePos.x);
+                    const dy = (mouseY - lastMousePos.y);
+
+                    let newWidth = bubble.width;
+                    let newHeight = bubble.height;
+                    let newX = bubble.x;
+                    let newY = bubble.y;
+
+                    // Adjust width/height based on resize handle
+                    switch (resizeHandle) {
+                        case 'topLeft':
+                            newWidth -= dx; newHeight -= dy;
+                            newX += dx / 2; newY += dy / 2;
+                            break;
+                        case 'topRight':
+                            newWidth += dx; newHeight -= dy;
+                            newX += dx / 2; newY += dy / 2;
+                            break;
+                        case 'bottomLeft':
+                            newWidth -= dx; newHeight += dy;
+                            newX += dx / 2; newY += dy / 2;
+                            break;
+                        case 'bottomRight':
+                            newWidth += dx; newHeight += dy;
+                            newX += dx / 2; newY += dy / 2;
+                            break;
+                    }
+
+                    bubble.width = Math.max(20, newWidth);
+                    bubble.height = Math.max(20, newHeight);
+                    bubble.x = newX;
+                    bubble.y = newY;
+
+                    lastMousePos = { x: mouseX, y: mouseY };
+                    draw();
+                } else if (mode === 'dragging' && isDraggingBubble && selectedBubbleIndex !== -1) {
+                    const bubble = speechBubbles[selectedBubbleIndex];
+                    const dx = mouseX - lastMousePos.x;
+                    const dy = mouseY - lastMousePos.y;
+                    bubble.x += dx;
+                    bubble.y += dy;
+                    if (!isDraggingTail) {
+                        bubble.tailTipX += dx;
+                        bubble.tailTipY += dy;
+                    }
+                    lastMousePos = { x: mouseX, y: mouseY };
+                    draw();
+                } else if (mode === 'panning' && isDraggingCanvas) {
+                    offset.x = lastOffset.x + (e.clientX - imageCanvas.getBoundingClientRect().left - startPan.x);
+                    offset.y = lastOffset.y + (e.clientY - imageCanvas.getBoundingClientRect().top - startPan.y);
+                    draw();
+                }
+            }
+        });
+
+        imageCanvas.addEventListener('mouseup', () => {
+            // ONLY reset dragging states, do not trigger modal here
+            isDraggingCanvas = false;
+            isDraggingBubble = false;
+            isResizingBubble = false;
+            isDraggingTail = false;
+            resizeHandle = null;
+
+            if (mode !== 'drawing') { // If not drawing a new bubble, revert cursor/mode to idle
+                mode = 'idle';
+                imageCanvas.classList.remove('dragging-mode', 'drawing-mode');
+            }
+            updateDebugInfo();
+            draw(); // Ensure final state is drawn
+        });
+
+        // Add mouseup listener to window to handle cases where mouse leaves canvas while dragging
+        window.addEventListener('mouseup', () => {
+            // ONLY reset dragging states
+            isDraggingCanvas = false;
+            isDraggingBubble = false;
+            isResizingBubble = false;
+            isDraggingTail = false;
+            resizeHandle = null;
+
+            if (mode !== 'drawing') {
+                mode = 'idle';
+                imageCanvas.classList.remove('dragging-mode', 'drawing-mode');
+            }
+            updateDebugInfo();
+        });
+
+
+        imageCanvas.addEventListener('mouseout', () => {
+            // If dragging, allow drag to continue outside canvas
+            if (!isDraggingCanvas && !isDraggingBubble && !isResizingBubble && !isDraggingTail) {
+                imageCanvas.classList.remove('dragging-mode', 'drawing-mode');
+            }
+        });
+
+        // Add an event listener for double-clicking on a bubble to open the edit modal
+        imageCanvas.addEventListener('dblclick', (e) => {
+            // Get mouse position in image-relative world coordinates
+            const { x: mouseX, y: mouseY } = getMouseWorldCoordinates(e);
+
+            for (let i = speechBubbles.length - 1; i >= 0; i--) {
+                const bubble = speechBubbles[i];
+                // Simple AABB check (axis-aligned bounding box) for click detection
+                const minX = bubble.x - bubble.width / 2;
+                const maxX = bubble.x + bubble.width / 2;
+                const minY = bubble.y - bubble.height / 2;
+                const maxY = bubble.y + bubble.height / 2;
+
+                if (mouseX >= minX && mouseX <= maxX && mouseY >= minY && mouseY <= maxY) {
+                    selectedBubbleIndex = i;
+                    updateDebugInfo();
+                    draw(); // Highlight selected bubble
+                    showSpeechBubbleModal(bubble); // Show modal on double-click
+                    break; // Stop after finding the first bubble
+                }
+            }
+        });
+
+
+        // --- Modal Event Listeners ---
+
+        bubbleFillOpacityInput.addEventListener('input', () => {
+            bubbleFillOpacityValueSpan.textContent = `${bubbleFillOpacityInput.value}%`;
+        });
+
+        borderOpacityInput.addEventListener('input', () => {
+            borderOpacityValueSpan.textContent = `${borderOpacityInput.value}%`;
+        });
+
+        /** Populates the speech bubble modal with data from the given bubble object. */
+        function showSpeechBubbleModal(bubble) {
+            speechBubbleModalTitle.textContent = selectedBubbleIndex === -1 ? 'Create Speech Bubble' : 'Edit Speech Bubble';
+            speechBubbleTextInput.value = bubble.text;
+            bubbleFontSizeInput.value = bubble.fontSize;
+            bubbleFontFamilySelect.value = bubble.fontFamily;
+            bubbleRotationInput.value = bubble.rotation;
+            bubbleLineThicknessInput.value = bubble.lineThickness;
+            bubbleTailOriginSelect.value = bubble.tailOriginCorner;
+
+            // Populate color and transparency inputs
+            if (typeof bubble.bubbleFillColor === 'string' && bubble.bubbleFillColor.startsWith('#')) {
+                bubbleFillColorInput.value = bubble.bubbleFillColor;
+                bubbleFillOpacityInput.value = bubble.bubbleFillOpacity;
+            } else {
+                const fill = rgbaToHexAndOpacity(bubble.bubbleFillColor);
+                bubbleFillColorInput.value = fill.hex;
+                bubbleFillOpacityInput.value = fill.opacity;
+            }
+
+            if (typeof bubble.borderColor === 'string' && bubble.borderColor.startsWith('#')) {
+                borderColorInput.value = bubble.borderColor;
+                borderOpacityInput.value = bubble.borderOpacity;
+            } else {
+                const border = rgbaToHexAndOpacity(bubble.borderColor);
+                borderColorInput.value = border.hex;
+                borderOpacityInput.value = border.opacity;
+            }
+
+            fontColorInput.value = bubble.fontColor;
+            speechBubbleModal.classList.remove('hidden');
+        }
+
+        /** Saves changes from the modal to the current drawing bubble or selected bubble. */
+        saveSpeechBubbleBtn.addEventListener('click', () => {
+            const newText = speechBubbleTextInput.value;
+
+            // Basic validation for text
+            if (newText.trim() === '' && !currentDrawingBubble && selectedBubbleIndex !== -1) {
+                showMessage("Validation Error", "Speech bubble text cannot be empty. Please enter some text or delete the bubble.");
+                return;
+            }
+
+            const newFontSize = parseFloat(bubbleFontSizeInput.value);
+            const newFontFamily = bubbleFontFamilySelect.value;
+            const newRotation = parseFloat(bubbleRotationInput.value);
+            const newBubbleLineThickness = parseFloat(bubbleLineThicknessInput.value);
+            const newTailOriginCorner = bubbleTailOriginSelect.value;
+
+            const newBubbleFillColorHex = bubbleFillColorInput.value;
+            const newBubbleFillOpacity = parseFloat(bubbleFillOpacityInput.value);
+            const newBorderColorHex = borderColorInput.value;
+            const newBorderOpacity = parseFloat(borderOpacityInput.value);
+            const newFontColor = fontColorInput.value;
+
+            let bubbleToUpdate = currentDrawingBubble || speechBubbles[selectedBubbleIndex];
+
+            if (!bubbleToUpdate) {
+                showMessage("Error", "No bubble selected or being created. Cannot save changes.");
+                return;
+            }
+
+            bubbleToUpdate.text = newText;
+            bubbleToUpdate.fontSize = newFontSize;
+            bubbleToUpdate.fontFamily = newFontFamily;
+            bubbleToUpdate.rotation = newRotation;
+            bubbleToUpdate.lineThickness = newBubbleLineThickness;
+            bubbleToUpdate.tailOriginCorner = newTailOriginCorner;
+            bubbleToUpdate.bubbleFillColor = newBubbleFillColorHex; // Store as hex
+            bubbleToUpdate.bubbleFillOpacity = newBubbleFillOpacity;
+            bubbleToUpdate.borderColor = newBorderColorHex;         // Store as hex
+            bubbleToUpdate.borderOpacity = newBorderOpacity;
+            bubbleToUpdate.fontColor = newFontColor;
+
+            // Calculate intrinsic width/height based on new text and font size
+            const tempTextCanvas = document.createElement('canvas');
+            const tempTextCtx = tempTextCanvas.getContext('2d');
+            tempTextCtx.font = `${newFontSize}px ${newFontFamily}`; // Use newFontSize directly for intrinsic measurement
+
+            const tempLines = newText.split('\n');
+            let tempMaxTextWidth = 0;
+            tempLines.forEach(line => {
+                tempMaxTextWidth = Math.max(tempMaxTextWidth, tempTextCtx.measureText(line).width);
+            });
+            const tempTextLineHeight = newFontSize * 1.2;
+            const tempPadding = (newFontSize * 0.7);
+            const tempBubbleWidth = tempMaxTextWidth + 2 * tempPadding;
+            const tempBubbleHeight = (tempLines.length * tempTextLineHeight) + 2 * tempPadding;
+
+            // Store these intrinsic dimensions
+            bubbleToUpdate.width = tempBubbleWidth;
+            bubbleToUpdate.height = tempBubbleHeight;
+
+            // Calculate initial tailTipX and tailTipY if a tail corner is selected (or update if corner changed)
+            if (newTailOriginCorner !== 'none') {
+                let targetX, targetY;
+                // Calculate position relative to bubble's image-relative world center and intrinsic size
+                const bubbleRectX = bubbleToUpdate.x - tempBubbleWidth / 2;
+                const bubbleRectY = bubbleToUpdate.y - tempBubbleHeight / 2;
+
+                switch (newTailOriginCorner) {
+                    case 'topLeft':
+                        targetX = bubbleRectX - DEFAULT_TAIL_LENGTH;
+                        targetY = bubbleRectY - DEFAULT_TAIL_LENGTH;
+                        break;
+                    case 'topRight':
+                        targetX = bubbleRectX + tempBubbleWidth + DEFAULT_TAIL_LENGTH;
+                        targetY = bubbleRectY - DEFAULT_TAIL_LENGTH;
+                        break;
+                    case 'bottomLeft':
+                        targetX = bubbleRectX - DEFAULT_TAIL_LENGTH;
+                        targetY = bubbleRectY + tempBubbleHeight + DEFAULT_TAIL_LENGTH;
+                        break;
+                    case 'bottomRight':
+                        targetX = bubbleRectX + tempBubbleWidth + DEFAULT_TAIL_LENGTH;
+                        targetY = bubbleRectY + tempBubbleHeight + DEFAULT_TAIL_LENGTH;
+                        break;
+                }
+                bubbleToUpdate.tailTipX = targetX;
+                bubbleToUpdate.tailTipY = targetY;
+            } else {
+                // If tail is removed, clear its tip coordinates
+                bubbleToUpdate.tailTipX = undefined;
+                bubbleToUpdate.tailTipY = undefined;
+            }
+
+
+            if (currentDrawingBubble) {
+                speechBubbles.push(currentDrawingBubble); // Add to the main array
+            }
+
+            speechBubbleModal.classList.add('hidden');
+            currentDrawingBubble = null; // Clear temp bubble
+            selectedBubbleIndex = -1; // Deselect
+            mode = 'idle';
+            updateDebugInfo();
+            draw();
+            showMessage("Success", "Speech bubble saved!");
+        });
+
+        /** Cancels the speech bubble creation/edit and hides the modal. */
+        cancelSpeechBubbleBtn.addEventListener('click', () => {
+            if (mode === 'drawing' && currentDrawingBubble && currentDrawingBubble.text.trim() === '') {
+                // If it's a new bubble with no text, effectively "delete" it
+                showMessage("Cancelled", "New speech bubble discarded as no text was entered.");
+            } else if (mode === 'drawing' && currentDrawingBubble && currentDrawingBubble.text.trim() !== '') {
+                 // If it's a new bubble with text, add it anyway.
+                 // This ensures the user doesn't lose text if they hit cancel.
+                 speechBubbles.push(currentDrawingBubble);
+                 showMessage("Saved", "Speech bubble added (text was present).");
+            }
+
+            speechBubbleModal.classList.add('hidden');
+            currentDrawingBubble = null;
+            selectedBubbleIndex = -1;
+            mode = 'idle';
+            updateDebugInfo();
+            draw();
+        });
+
+        /** Deletes the currently selected speech bubble. */
+        deleteSpeechBubbleBtn.addEventListener('click', () => {
+            if (selectedBubbleIndex !== -1) {
+                speechBubbles.splice(selectedBubbleIndex, 1);
+                showMessage("Success", "Speech bubble deleted.");
+            } else {
+                showMessage("Error", "No speech bubble selected for deletion.");
+            }
+            speechBubbleModal.classList.add('hidden');
+            currentDrawingBubble = null;
+            selectedBubbleIndex = -1;
+            mode = 'idle';
+            updateDebugInfo();
+            draw();
+        });
+
+        /** Closes the general message modal. */
+        closeMessageModalBtn.addEventListener('click', hideMessage);
+
+        // --- Initial Setup and Event Listeners ---
+
+        window.addEventListener('load', resizeCanvas);
+        window.addEventListener('resize', resizeCanvas);
+
+        window.addEventListener('DOMContentLoaded', () => {
+             draw(); // Initial draw
+             updateDebugInfo();
+        });
+    </script>
+</body>
+</html>
