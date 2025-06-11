@@ -1,21 +1,80 @@
-BubbleUp is a quick html/javascript page that allows you to embed speechbubbles in images. I couldn't find anything like it which was fast. Yes there are many more image editors that can do this but I wanted something simple and fast loading.
+# BubbleUp
 
-You can just run this index file stand-alone in your preferred browser or you can create an .exe so it opens in an app-mode default browser without the toolbars. There are a few free tools to do that.
+**BubbleUp** is a lightweight HTML/JavaScript tool for quickly adding speech bubbles to images. It was created because I couldn’t find a fast, no-frills tool that didn’t require a full image editing suite just to add a few callouts.
 
-Here is the basis of it's functionality:
-How to Use BubbleUp
-1. Upload Image: Click 'Upload Image' to choose your base image.
+Unlike heavy image editors, BubbleUp loads instantly, runs locally, and provides an intuitive, focused UI for speech bubble editing.
 
-2. Create Bubble: Click 'Create Speech Bubble' to open the editor. Enter text, choose styles, and click 'Save Changes'. A new bubble appears centered.
+---
 
-3. Move/Resize Bubbles: Drag the bubble body to reposition. Drag the small squares at the corners to resize. Drag the small square at the tail tip to adjust the tail.
+## 🚀 Features
 
-4. Edit Bubble: Double-click an existing bubble to reopen its editor.
+- ✅ No install required — runs from a standalone `index.html` file  
+- ✅ Fast, browser-based performance  
+- ✅ Add, move, resize, and customize speech bubbles  
+- ✅ Save the final image with or without cropping to original size  
+- ✅ Zoom and pan for fine control  
 
-5. Pan: Drag the canvas background to pan around, especially when zoomed in.
+---
 
-6. Zoom: Use '+' and '-' buttons to zoom in/out, or 'Reset' to return to 100%.
+## 🔧 How to Use BubbleUp
 
-7. Save: 'Save Edited Image' saves your work. Check 'Save within Original Image Bounds' to crop the output to the original image's dimensions.
+1. **Upload Image**  
+   Click **Upload Image** and select your base image.
 
-8. Clear Canvas: Removes all images and bubbles.
+2. **Create Bubble**  
+   Click **Create Speech Bubble** to open the editor.  
+   Type your text, choose your bubble style, then click **Save Changes**.  
+   A new bubble appears centered on the image.
+
+3. **Move/Resize Bubbles**  
+   - Drag the bubble to reposition it.  
+   - Drag the small corner squares to resize.  
+   - Drag the small square at the tail tip to adjust the tail's direction.
+
+4. **Edit Bubble**  
+   Double-click any existing bubble to reopen the editor and make changes.
+
+5. **Pan**  
+   Click and drag the canvas background to move the view (especially useful when zoomed in).
+
+6. **Zoom**  
+   Use the **+** and **−** buttons to zoom in and out.  
+   Click **Reset** to return to 100% zoom.
+
+7. **Save**  
+   Click **Save Edited Image** to download your work.  
+   Enable **Save within Original Image Bounds** to crop the result to the image's original size.
+
+8. **Clear Canvas**  
+   Removes all images and bubbles so you can start fresh.
+
+---
+
+## 🖥️ Running BubbleUp
+
+Just open the `index.html` file in your preferred browser.
+
+### Optional: Turn it into an App
+
+If you'd like to open BubbleUp in a distraction-free app window (no address bar, tabs, etc.), you can:
+
+- Use tools like [WebView2Loader](https://learn.microsoft.com/en-us/microsoft-edge/webview2/) (Windows)
+- Create a Progressive Web App (PWA) shortcut in Chrome or Edge
+- Package with free tools like [Nativefier](https://github.com/nativefier/nativefier)
+
+---
+
+## 📁 Files
+
+- `index.html` – The main file. Open this to use BubbleUp.
+- (Other assets...) – Ensure your script, style, and image assets are in the same folder.
+
+---
+
+## 🙏 Final Thoughts
+
+I hope you find this tool useful.  
+BubbleUp is simple by design — built to quickly do one job well: add speech bubbles to images.
+
+Enjoy!
+
