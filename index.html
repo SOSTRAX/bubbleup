@@ -58,27 +58,22 @@
 </head>
 <body class="bg-gray-100 flex flex-col h-screen overflow-hidden">
 
-    <!-- Author name visible in top-left -->
     <div style="position: fixed; top: 5px; left: 10px; font-size: 11px; font-family: sans-serif; color: #555; z-index: 10000; pointer-events: none;">
       © 2025 Michael Dietz · SOSTRAX
-
     </div>
 
     <!-- Hidden project/license/contact info -->
     <div style="display: none;">
       <section>
         <h2>About This Project</h2>
-        <p><strong>Project:</strong> My First HTML Project</p>
-        <p><strong>Author:</strong> Your Name</p>
-        <p>This project is a simple HTML page created to demonstrate my ability to design clean, semantic web content.</p>
+        <p><strong>Project:</strong> BubbleUp Image Editor</p>
+        <p><strong>Author:</strong> Michael Dietz</p>
+        <p>This project is a simple HTML page created to demonstrate the flexibility of the CANVAS.</p>
         <p><strong>License:</strong> MIT License — free to use with attribution. See https://opensource.org/licenses/MIT</p>
-        <p>If you’re interested in working together or want to know more, feel free to contact me: your.email@example.com</p>
-        <p>View this project on GitHub: https://github.com/yourusername/your-repo-name</p>
+        <p>If you’re interested in working together or want to know more, feel free to contact me: mike@sostrax.com</p>
+        <p>View this project on GitHub: https://github.com/SOSTRAX/bubbleup</p>
       </section>
     </div>
-
-
-
 
     <!-- Main Header -->
     <header class="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white shadow-lg z-10">
@@ -94,14 +89,14 @@
             <!-- Image Upload -->
             <div>
                 <label for="imageUpload" class="block text-sm font-medium text-gray-700 mb-1">Upload Image</label>
-                <input type="file" id="imageUpload" accept="image/*"
-                    class="block w-full text-sm text-gray-500
-                    file:mr-4 file:py-2 file:px-4
-                    file:rounded-full file:border-0
-                    file:text-sm file:font-semibold
-                    file:bg-blue-50 file:text-blue-700
-                    hover:file:bg-blue-100 cursor-pointer"
+                <!-- Custom File Input -->
+                <input type="file" id="imageUpload" accept="image/*" class="hidden">
+                <button id="customImageUploadBtn"
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105 w-full"
                 >
+                    Choose Image
+                </button>
+                <span id="fileNameDisplay" class="block text-xs text-gray-500 mt-1 truncate">No file chosen</span>
             </div>
 
             <!-- Create Speech Bubble Button -->
@@ -132,6 +127,9 @@
             >
                 How To Use
             </button>
+
+            <!-- Double Click To Edit Bubble Label -->
+            <p class="text-sm text-gray-600 text-center mt-1">Double Click To Edit Bubble</p>
 
             <!-- Clear Canvas Button -->
             <button id="clearCanvasBtn"
@@ -303,6 +301,8 @@
         const imageCanvas = document.getElementById('imageCanvas');
         const ctx = imageCanvas.getContext('2d');
         const imageUpload = document.getElementById('imageUpload');
+        const customImageUploadBtn = document.getElementById('customImageUploadBtn'); // New: Custom upload button
+        const fileNameDisplay = document.getElementById('fileNameDisplay');       // New: File name display
         const createSpeechBubbleBtn = document.getElementById('createSpeechBubbleBtn');
         const saveImageBtn = document.getElementById('saveImageBtn');
         const saveImageWithinBoundsCheckbox = document.getElementById('saveImageWithinBounds');
@@ -345,10 +345,10 @@
         let selectedBubbleIndex = -1; // Index of the currently selected/edited bubble
         let mode = 'idle'; // 'idle', 'drawing', 'dragging', 'panning', 'draggingTail', 'resizing'
         let startPan = { x: 0, y: 0 }; // Start coordinates for panning
-        let offset = { x: 0, y: 0 }; // Current canvas offset for panning
+        let offset = { x: 0, y: 0 }; // Current canvas offset for panning (top-left of scaled image on canvas)
         let lastOffset = { x: 0, y: 0 }; // Last saved offset for continuous panning
         let scale = 1; // Current zoom level
-        let lastMousePos = { x: 0, y: 0 }; // Last mouse position for dragging bubbles/tail
+        let lastMousePos = { x: 0, y: 0 }; // Last mouse position for dragging bubbles/tail (in image-relative world coords)
 
         const DEFAULT_FONT_SIZE = 24;
         const DEFAULT_FONT_FAMILY = 'Arial';
@@ -447,6 +447,20 @@
             const container = document.getElementById('canvasContainer');
             imageCanvas.width = container.clientWidth;
             imageCanvas.height = container.clientHeight;
+
+            // Recalculate offset to keep the image centered relative to the new canvas size
+            if (originalImage) {
+                const imgScaledWidth = originalImage.width * scale;
+                const imgScaledHeight = originalImage.height * scale;
+                offset.x = (imageCanvas.width - imgScaledWidth) / 2;
+                offset.y = (imageCanvas.height - imgScaledHeight) / 2;
+                lastOffset = { ...offset }; // Update lastOffset for consistency
+            } else {
+                // If no image, ensure offset is (0,0) so placeholder is drawn from top-left
+                offset.x = 0;
+                offset.y = 0;
+                lastOffset = { x: 0, y: 0 };
+            }
             draw();
         }
 
@@ -456,10 +470,11 @@
             speechBubbles = [];
             currentDrawingBubble = null;
             selectedBubbleIndex = -1;
-            offset = { x: 0, y: 0 };
+            offset = { x: 0, y: 0 }; // Reset offset
             lastOffset = { x: 0, y: 0 };
             scale = 1;
             mode = 'idle';
+            fileNameDisplay.textContent = 'No file chosen'; // Clear file name display
             updateDebugInfo();
             draw();
             showMessage("Canvas Cleared", "All content has been removed from the canvas.");
@@ -478,41 +493,33 @@
 
             ctx.save(); // Save context state before applying global transformations
 
-            // Apply global panning and zooming to the entire canvas content
+            // Apply global panning and zooming to the entire canvas content.
+            // 'offset' now represents the top-left screen coordinate of the scaled image.
             ctx.translate(offset.x, offset.y);
             ctx.scale(scale, scale);
 
-            // Calculate where the top-left of the original image should be drawn
-            // These are coordinates in the *current scaled/panned context*.
-            const imgDisplayWidth = originalImage ? originalImage.width : imageCanvas.width;
-            const imgDisplayHeight = originalImage ? originalImage.height : imageCanvas.height;
-            const imgDrawOffsetX = (imageCanvas.width / scale - imgDisplayWidth) / 2;
-            const imgDrawOffsetY = (imageCanvas.height / scale - imgDisplayHeight) / 2;
-
+            // Now, (0,0) in the context is the top-left of the original image (or placeholder)
+            // in the *scaled world coordinates*.
 
             if (originalImage) {
-                // Draw original image at its calculated position within the scaled/panned context
-                ctx.drawImage(originalImage, imgDrawOffsetX, imgDrawOffsetY, originalImage.width, originalImage.height);
+                // Draw original image at its origin (0,0) in this scaled context.
+                ctx.drawImage(originalImage, 0, 0, originalImage.width, originalImage.height);
             } else {
-                // If no image, draw a placeholder background
+                // If no image, draw a placeholder background at (0,0)
+                // Its dimensions should be 'world' dimensions (unscaled, as scaling is already applied)
+                const defaultWorldWidth = imageCanvas.width / scale;
+                const defaultWorldHeight = imageCanvas.width / scale * (9/16); // Placeholder aspect ratio
                 ctx.fillStyle = '#f0f0f0';
-                ctx.fillRect(imgDrawOffsetX, imgDrawOffsetY, imageCanvas.width / scale, imageCanvas.height / scale);
+                ctx.fillRect(0, 0, defaultWorldWidth, defaultWorldHeight);
                 ctx.strokeStyle = '#cccccc';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(imgDrawOffsetX, imgDrawOffsetY, imageCanvas.width / scale, imageCanvas.height / scale);
+                ctx.lineWidth = 2 / scale; // Adjust line width for scale so it appears consistent
+                ctx.strokeRect(0, 0, defaultWorldWidth, defaultWorldHeight);
             }
 
-            // Translate the context again so that its (0,0) now aligns with the
-            // top-left of our "image-relative world coordinate" system.
-            // This is crucial for bubbles to use their stored image-relative coordinates directly.
-            ctx.translate(imgDrawOffsetX, imgDrawOffsetY);
-
-            // Draw speech bubbles
+            // Speech bubbles are drawn using their image-relative world coordinates (bubble.x, bubble.y).
+            // Since the context's (0,0) is currently aligned with the image's top-left in the scaled world,
+            // the bubble's coordinates will be correctly interpreted.
             speechBubbles.forEach((bubble, index) => {
-                // drawSpeechBubbleOnCanvas now expects bubble.x/y to be image-relative world coordinates.
-                // The current ctx is already scaled and translated to the image's top-left.
-                // So, drawSpeechBubbleOnCanvas only needs to translate to the bubble's position
-                // and apply its own rotation.
                 drawSpeechBubbleOnCanvas(ctx, bubble, index === selectedBubbleIndex);
             });
 
@@ -535,7 +542,7 @@
             ctx.save(); // Save context for this bubble's transformations
 
             // Translate to the bubble's center (bubble.x,y are image-relative world coords).
-            // The canvas context is already aligned with the image's (0,0).
+            // The canvas context's (0,0) is already aligned with the image's (0,0).
             ctx.translate(bubble.x, bubble.y);
             const rotationRadians = bubble.rotation * Math.PI / 180;
             ctx.rotate(rotationRadians); // Apply rotation in radians
@@ -651,25 +658,26 @@
             // Selection outline and handles.
             if (isSelected) {
                 ctx.strokeStyle = 'rgba(0, 123, 255, 0.8)';
-                ctx.lineWidth = 3; // Intrinsic selection line thickness
+                ctx.lineWidth = 3 / scale; // Adjust selection line thickness for scale
                 ctx.strokeRect(xLocal, yLocal, bubbleDrawingWidth, bubbleDrawingHeight);
 
                 const handleSize = 8; // Intrinsic handle size
-                const halfHandleForHandles = handleSize / 2;
+                const scaledHandleSize = handleSize / scale; // Adjust handle size for scale
+                const halfScaledHandle = scaledHandleSize / 2;
                 ctx.fillStyle = 'rgba(0, 123, 255, 1)';
                 
                 // Handles are drawn relative to the bubble's local, rotated context
-                ctx.fillRect(xLocal - halfHandleForHandles, yLocal - halfHandleForHandles, handleSize, handleSize);
-                ctx.fillRect(xLocal + bubbleDrawingWidth - halfHandleForHandles, yLocal - halfHandleForHandles, handleSize, handleSize);
-                ctx.fillRect(xLocal - halfHandleForHandles, yLocal + bubbleDrawingHeight - halfHandleForHandles, handleSize, handleSize);
-                ctx.fillRect(xLocal + bubbleDrawingWidth - halfHandleForHandles, yLocal + bubbleDrawingHeight - halfHandleForHandles, handleSize, handleSize);
+                ctx.fillRect(xLocal - halfScaledHandle, yLocal - halfScaledHandle, scaledHandleSize, scaledHandleSize);
+                ctx.fillRect(xLocal + bubbleDrawingWidth - halfScaledHandle, yLocal - halfScaledHandle, scaledHandleSize, scaledHandleSize);
+                ctx.fillRect(xLocal - halfScaledHandle, yLocal + bubbleDrawingHeight - halfScaledHandle, scaledHandleSize, scaledHandleSize);
+                ctx.fillRect(xLocal + bubbleDrawingWidth - halfScaledHandle, yLocal + bubbleDrawingHeight - halfScaledHandle, scaledHandleSize, scaledHandleSize);
 
                 if (isTailEnabled) {
                     // Tail handle position is relative to bubble center, then un-rotated
                     const tailTipRelativeX = bubble.tailTipX - bubble.x;
                     const tailTipRelativeY = bubble.tailTipY - bubble.y;
                     const tailHandleLocalRotated = rotatePoint(tailTipRelativeX, tailTipRelativeY, -rotationRadians);
-                    ctx.fillRect(tailHandleLocalRotated.x - halfHandleForHandles, tailHandleLocalRotated.y - halfHandleForHandles, handleSize, handleSize);
+                    ctx.fillRect(tailHandleLocalRotated.x - halfScaledHandle, tailHandleLocalRotated.y - halfScaledHandle, scaledHandleSize, scaledHandleSize);
                 }
             }
 
@@ -694,18 +702,28 @@
 
         // --- Event Handlers ---
 
+        // Custom image upload button click
+        customImageUploadBtn.addEventListener('click', () => {
+            imageUpload.click(); // Programmatically click the hidden file input
+        });
+
         /** Handles image file selection. */
         imageUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
+                fileNameDisplay.textContent = file.name; // Display selected file name
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     originalImage = new Image();
                     originalImage.onload = () => {
-                        // Reset offset and scale when a new image is loaded
-                        offset = { x: 0, y: 0 };
-                        lastOffset = { x: 0, y: 0 };
-                        scale = 1;
+                        // Calculate initial offset to center the image on the canvas
+                        // The offset is the top-left of the scaled image on the canvas.
+                        const imgScaledWidth = originalImage.width * scale;
+                        const imgScaledHeight = originalImage.height * scale;
+                        offset.x = (imageCanvas.width - imgScaledWidth) / 2;
+                        offset.y = (imageCanvas.height - imgScaledHeight) / 2;
+
+                        lastOffset = { ...offset }; // Initialize lastOffset too
                         draw(); // Redraw canvas with the new image
                         showMessage("Image Loaded", "Your image has been successfully loaded.");
                     };
@@ -717,6 +735,8 @@
                     originalImage.src = event.target.result;
                 };
                 reader.readAsDataURL(file);
+            } else {
+                fileNameDisplay.textContent = 'No file chosen'; // Clear file name if no file selected
             }
             // Clear the input value so selecting the same file again triggers change event
             e.target.value = '';
@@ -730,8 +750,12 @@
             updateDebugInfo();
 
             // Calculate initial center in image-relative world coordinates
-            let initialX = (originalImage ? originalImage.width : imageCanvas.width) / 2;
-            let initialY = (originalImage ? originalImage.height : imageCanvas.height) / 2;
+            // If no image, assume a default "world" size based on canvas dimensions for centering
+            let worldWidth = originalImage ? originalImage.width : imageCanvas.width / scale;
+            let worldHeight = originalImage ? originalImage.height : imageCanvas.height / scale;
+
+            let initialX = worldWidth / 2; // Image-relative world X
+            let initialY = worldHeight / 2; // Image-relative world Y
 
             // Initialize a temporary bubble object with default values
             currentDrawingBubble = {
@@ -749,7 +773,7 @@
                 borderColor: DEFAULT_BORDER_COLOR,     // Hex string
                 borderOpacity: DEFAULT_BORDER_OPACITY,   // Percentage
                 fontColor: DEFAULT_FONT_COLOR,
-                tailOriginCorner: 'none',
+                tailOriginCorner: 'bottomLeft', // Default to bottomLeft as requested
                 tailTipX: initialX, // Default tail tip to bubble center initially (image-relative world)
                 tailTipY: initialY
             };
@@ -783,11 +807,8 @@
                 // Draw original image at its native resolution (0,0)
                 finalCtx.drawImage(originalImage, 0, 0, originalImage.width, originalImage.height);
 
-                // For saving within bounds, we just draw bubbles with scale 1 and no offset.
-                // The bubble's (x,y) and tailTipX/Y are already image-relative world coordinates.
+                // Bubbles are already in image-relative world coordinates (native scale)
                 speechBubbles.forEach(bubble => {
-                    // drawSpeechBubbleOnCanvas now expects bubble.x/y to be image-relative world coordinates,
-                    // and will apply its own translate/rotate. No external scale/offset needed here.
                     drawSpeechBubbleOnCanvas(finalCtx, bubble, false);
                 });
 
@@ -801,27 +822,21 @@
                 finalCanvas.height = imageCanvas.height;
 
                 finalCtx.save();
+                // Apply the exact same global transformations as the main draw function
                 finalCtx.translate(offset.x, offset.y);
                 finalCtx.scale(scale, scale);
 
-                // Calculate where the top-left of the original image is in this scaled/panned context
-                const imgDisplayWidth = originalImage ? originalImage.width : imageCanvas.width;
-                const imgDisplayHeight = originalImage ? originalImage.height : imageCanvas.height;
-                const imgDrawOffsetX = (imageCanvas.width / scale - imgDisplayWidth) / 2;
-                const imgDrawOffsetY = (imageCanvas.height / scale - imgDisplayHeight) / 2;
-
                 if (originalImage) {
-                    finalCtx.drawImage(originalImage, imgDrawOffsetX, imgDrawOffsetY, originalImage.width, originalImage.height);
+                    finalCtx.drawImage(originalImage, 0, 0, originalImage.width, originalImage.height);
                 } else {
+                    const defaultWorldWidth = imageCanvas.width / scale;
+                    const defaultWorldHeight = imageCanvas.width / scale * (9/16);
                     finalCtx.fillStyle = '#f0f0f0';
-                    finalCtx.fillRect(imgDrawOffsetX, imgDrawOffsetY, imageCanvas.width / scale, imageCanvas.height / scale);
+                    finalCtx.fillRect(0, 0, defaultWorldWidth, defaultWorldHeight);
                     finalCtx.strokeStyle = '#cccccc';
-                    finalCtx.lineWidth = 2;
-                    finalCtx.strokeRect(imgDrawOffsetX, imgDrawOffsetY, imageCanvas.width / scale, imageCanvas.height / scale);
+                    finalCtx.lineWidth = 2 / scale;
+                    finalCtx.strokeRect(0, 0, defaultWorldWidth, defaultWorldHeight);
                 }
-
-                // Translate to align with the image-relative world coordinates before drawing bubbles
-                finalCtx.translate(imgDrawOffsetX, imgDrawOffsetY);
 
                 speechBubbles.forEach(bubble => {
                     drawSpeechBubbleOnCanvas(finalCtx, bubble, false);
@@ -847,12 +862,14 @@
 
         zoomInBtn.addEventListener('click', () => {
             scale = Math.min(scale + 0.1, 5); // Max zoom 500%
+            resizeCanvas(); // Recalculate offset after zoom
             updateDebugInfo();
             draw();
         });
 
         zoomOutBtn.addEventListener('click', () => {
             scale = Math.max(scale - 0.1, 0.2); // Min zoom 20%
+            resizeCanvas(); // Recalculate offset after zoom
             updateDebugInfo();
             draw();
         });
@@ -860,8 +877,7 @@
         // New: Reset Zoom Button
         resetZoomBtn.addEventListener('click', () => {
             scale = 1;
-            offset = { x: 0, y: 0 };
-            lastOffset = { x: 0, y: 0 };
+            resizeCanvas(); // Recalculate offset for 100% zoom
             updateDebugInfo();
             draw();
         });
@@ -870,7 +886,7 @@
         howToBtn.addEventListener('click', () => {
             const howToTitle = "How to Use BubbleUp";
             const howToText = `
-1. Upload Image: Click 'Upload Image' to choose your base image.
+1. Upload Image: Click 'Choose Image' to select your base image. The file name will appear below.
 
 2. Create Bubble: Click 'Create Speech Bubble' to open the editor. Enter text, choose styles, and click 'Save Changes'. A new bubble appears centered.
 
@@ -904,20 +920,13 @@
             const mouseClientX = e.clientX - rect.left;
             const mouseClientY = e.clientY - rect.top;
 
-            // Convert to canvas's "global scaled/panned" coordinate system
-            const canvasGlobalX = (mouseClientX - offset.x) / scale;
-            const canvasGlobalY = (mouseClientY - offset.y) / scale;
+            // Invert the canvas's global transformation: un-translate and un-scale
+            // These unscaled coordinates are now in the "image-relative world coordinates"
+            // where the image's top-left is at (0,0).
+            const unscaledX = (mouseClientX - offset.x) / scale;
+            const unscaledY = (mouseClientY - offset.y) / scale;
 
-            // Get the top-left of the image in "canvas global scaled/panned" system.
-            const imgDisplayWidth = originalImage ? originalImage.width : imageCanvas.width;
-            const imgDisplayHeight = originalImage ? originalImage.height : imageCanvas.height;
-            const imgDrawOffsetX = (imageCanvas.width / scale - imgDisplayWidth) / 2;
-            const imgDrawOffsetY = (imageCanvas.height / scale - imgDisplayHeight) / 2;
-
-            // Convert to "image-relative world coordinates"
-            const mouseX = canvasGlobalX - imgDrawOffsetX;
-            const mouseY = canvasGlobalY - imgDrawOffsetY;
-            return { x: mouseX, y: mouseY };
+            return { x: unscaledX, y: unscaledY };
         }
 
         imageCanvas.addEventListener('mousedown', (e) => {
@@ -1018,8 +1027,9 @@
 
             // 4. If nothing else was clicked, start canvas panning
             isDraggingCanvas = true;
+            // Store mouse position relative to canvas element for panning calculation
             startPan = { x: e.clientX - imageCanvas.getBoundingClientRect().left, y: e.clientY - imageCanvas.getBoundingClientRect().top };
-            lastOffset = { ...offset };
+            lastOffset = { ...offset }; // Save current offset before starting pan
             mode = 'panning';
             imageCanvas.classList.add('dragging-mode');
             updateDebugInfo();
@@ -1032,61 +1042,66 @@
             const { x: mouseX, y: mouseY } = getMouseWorldCoordinates(e);
 
             // Define current image bounds (image-relative world coordinates)
-            const imgWidth = originalImage ? originalImage.width : imageCanvas.width;
-            const imgHeight = originalImage ? originalImage.height : imageCanvas.height;
+            const imgWidth = originalImage ? originalImage.width : imageCanvas.width / scale;
+            const imgHeight = originalImage ? originalImage.height : imageCanvas.width / scale * (9/16); // Placeholder height
+
             const imageWorldLeft = 0;
             const imageWorldTop = 0;
             const imageWorldRight = imgWidth;
             const imageWorldBottom = imgHeight;
 
-            if (saveImageWithinBoundsCheckbox.checked && originalImage) {
-                if (mode === 'draggingTail' && isDraggingTail && selectedBubbleIndex !== -1) {
-                    const bubble = speechBubbles[selectedBubbleIndex];
-                    // Clamp tail tip to image world bounds
+            if (mode === 'draggingTail' && isDraggingTail && selectedBubbleIndex !== -1) {
+                const bubble = speechBubbles[selectedBubbleIndex];
+                // Clamp tail tip to image world bounds only if saving within bounds and originalImage exists
+                if (saveImageWithinBoundsCheckbox.checked && originalImage) {
                     bubble.tailTipX = Math.max(imageWorldLeft, Math.min(imageWorldRight, mouseX));
                     bubble.tailTipY = Math.max(imageWorldTop, Math.min(imageWorldBottom, mouseY));
-                    draw();
-                } else if (mode === 'resizing' && isResizingBubble && selectedBubbleIndex !== -1 && resizeHandle) {
-                    const bubble = speechBubbles[selectedBubbleIndex];
-                    const dx = (mouseX - lastMousePos.x); // delta in image-relative world coordinates
-                    const dy = (mouseY - lastMousePos.y);
+                } else {
+                    bubble.tailTipX = mouseX;
+                    bubble.tailTipY = mouseY;
+                }
+                draw();
+            } else if (mode === 'resizing' && isResizingBubble && selectedBubbleIndex !== -1 && resizeHandle) {
+                const bubble = speechBubbles[selectedBubbleIndex];
+                const dx = (mouseX - lastMousePos.x); // delta in image-relative world coordinates
+                const dy = (mouseY - lastMousePos.y);
 
-                    let newWidth = bubble.width;
-                    let newHeight = bubble.height;
-                    let newX = bubble.x; // bubble center (image-relative world)
-                    let newY = bubble.y;
+                let newWidth = bubble.width;
+                let newHeight = bubble.height;
+                let newX = bubble.x; // bubble center (image-relative world)
+                let newY = bubble.y;
 
-                    // Adjust width/height based on resize handle
-                    switch (resizeHandle) {
-                        case 'topLeft':
-                            newWidth -= dx; newHeight -= dy;
-                            newX += dx / 2; newY += dy / 2;
-                            break;
-                        case 'topRight':
-                            newWidth += dx; newHeight -= dy;
-                            newX += dx / 2; newY += dy / 2;
-                            break;
-                        case 'bottomLeft':
-                            newWidth -= dx; newHeight += dy;
-                            newX += dx / 2; newY += dy / 2;
-                            break;
-                        case 'bottomRight':
-                            newWidth += dx; newHeight += dy;
-                            newX += dx / 2; newY += dy / 2;
-                            break;
-                    }
+                // Adjust width/height based on resize handle
+                switch (resizeHandle) {
+                    case 'topLeft':
+                        newWidth -= dx; newHeight -= dy;
+                        newX += dx / 2; newY += dy / 2;
+                        break;
+                    case 'topRight':
+                        newWidth += dx; newHeight -= dy;
+                        newX += dx / 2; newY += dy / 2;
+                        break;
+                    case 'bottomLeft':
+                        newWidth -= dx; newHeight += dy;
+                        newX += dx / 2; newY += dy / 2;
+                        break;
+                    case 'bottomRight':
+                        newWidth += dx; newHeight += dy;
+                        newX += dx / 2; newY += dy / 2;
+                        break;
+                }
 
-                    // Apply temporary bounds for width/height
-                    newWidth = Math.max(20, newWidth);
-                    newHeight = Math.max(20, newHeight);
+                // Apply minimum dimensions
+                newWidth = Math.max(20, newWidth);
+                newHeight = Math.max(20, newHeight);
 
-                    // Calculate potential new bubble bounds for clamping (image-relative world)
+                // Clamp bubble position and size to image bounds if saving within bounds and originalImage exists
+                if (saveImageWithinBoundsCheckbox.checked && originalImage) {
                     let potentialMinX = newX - newWidth / 2;
                     let potentialMaxX = newX + newWidth / 2;
                     let potentialMinY = newY - newHeight / 2;
                     let potentialMaxY = newY + newHeight / 2;
 
-                    // Clamp potential bubble position and adjust newX, newY, newWidth, newHeight
                     if (potentialMinX < imageWorldLeft) {
                         newWidth -= (imageWorldLeft - potentialMinX);
                         newX = imageWorldLeft + newWidth / 2;
@@ -1103,130 +1118,72 @@
                         newHeight -= (potentialMaxY - imageWorldBottom);
                         newY = imageWorldBottom - newHeight / 2;
                     }
+                    newWidth = Math.max(20, newWidth); // Re-apply min width after clamping
+                    newHeight = Math.max(20, newHeight); // Re-apply min height after clamping
+                }
 
-                    bubble.width = Math.max(20, newWidth); // Apply min width again after clamping
-                    bubble.height = Math.max(20, newHeight); // Apply min height again after clamping
-                    bubble.x = newX;
-                    bubble.y = newY;
+                bubble.width = newWidth;
+                bubble.height = newHeight;
+                bubble.x = newX;
+                bubble.y = newY;
 
-                    lastMousePos = { x: mouseX, y: mouseY };
-                    draw();
+                lastMousePos = { x: mouseX, y: mouseY };
+                draw();
 
-                } else if (mode === 'dragging' && isDraggingBubble && selectedBubbleIndex !== -1) {
-                    const bubble = speechBubbles[selectedBubbleIndex];
-                    const dx = mouseX - lastMousePos.x;
-                    const dy = mouseY - lastMousePos.y;
+            } else if (mode === 'dragging' && isDraggingBubble && selectedBubbleIndex !== -1) {
+                const bubble = speechBubbles[selectedBubbleIndex];
+                const dx = mouseX - lastMousePos.x;
+                const dy = mouseY - lastMousePos.y;
 
-                    let newBubbleX = bubble.x + dx;
-                    let newBubbleY = bubble.y + dy;
+                let newBubbleX = bubble.x + dx;
+                let newBubbleY = bubble.y + dy;
 
-                    // Clamp bubble center within image bounds (image-relative world)
+                // Clamp bubble center within image bounds if saving within bounds and originalImage exists
+                if (saveImageWithinBoundsCheckbox.checked && originalImage) {
                     newBubbleX = Math.max(imageWorldLeft + bubble.width / 2, Math.min(imageWorldRight - bubble.width / 2, newBubbleX));
                     newBubbleY = Math.max(imageWorldTop + bubble.height / 2, Math.min(imageWorldBottom - bubble.height / 2, newBubbleY));
-
-                    // Adjust dx, dy based on clamping
-                    const actualDx = newBubbleX - bubble.x;
-                    const actualDy = newBubbleY - bubble.y;
-
-                    bubble.x = newBubbleX;
-                    bubble.y = newBubbleY;
-
-                    if (!isDraggingTail) { // Prevent conflicting updates if tail is being separately dragged
-                        bubble.tailTipX += actualDx;
-                        bubble.tailTipY += actualDy;
-                    }
-                    lastMousePos = { x: mouseX, y: mouseY };
-                    draw();
-                } else if (mode === 'panning' && isDraggingCanvas) {
-                    // Panning operates on canvas screen coordinates, not image-relative world coordinates
-                    offset.x = lastOffset.x + (e.clientX - imageCanvas.getBoundingClientRect().left - startPan.x);
-                    offset.y = lastOffset.y + (e.clientY - imageCanvas.getBoundingClientRect().top - startPan.y);
-
-                    // Clamp offset to keep original image within canvas view (if image exists)
-                    if (originalImage) {
-                        const currentImageScaledWidth = originalImage.width * scale;
-                        const currentImageScaledHeight = originalImage.height * scale;
-                        const centeredImageX = (imageCanvas.width - currentImageScaledWidth) / 2;
-                        const centeredImageY = (imageCanvas.height - currentImageScaledHeight) / 2;
-
-                        if (currentImageScaledWidth < imageCanvas.width) {
-                            offset.x = centeredImageX;
-                        } else {
-                            const minAllowedOffsetX = imageCanvas.width - currentImageScaledWidth - centeredImageX;
-                            const maxAllowedOffsetX = -centeredImageX;
-                            offset.x = Math.max(minAllowedOffsetX, Math.min(maxAllowedOffsetX, offset.x));
-                        }
-
-                        if (currentImageScaledHeight < imageCanvas.height) {
-                            offset.y = centeredImageY;
-                        } else {
-                            const minAllowedOffsetY = imageCanvas.height - currentImageScaledHeight - centeredImageY;
-                            const maxAllowedOffsetY = -centeredImageY;
-                            offset.y = Math.max(minAllowedOffsetY, Math.min(maxAllowedOffsetY, offset.y));
-                        }
-                    } // If no image, allow free panning
-                    draw();
                 }
-            } else { // If saveWithinBounds is NOT checked or no originalImage, allow free movement
-                if (mode === 'draggingTail' && isDraggingTail && selectedBubbleIndex !== -1) {
-                    const bubble = speechBubbles[selectedBubbleIndex];
-                    bubble.tailTipX = mouseX;
-                    bubble.tailTipY = mouseY;
-                    draw();
-                } else if (mode === 'resizing' && isResizingBubble && selectedBubbleIndex !== -1 && resizeHandle) {
-                    const bubble = speechBubbles[selectedBubbleIndex];
-                    const dx = (mouseX - lastMousePos.x);
-                    const dy = (mouseY - lastMousePos.y);
 
-                    let newWidth = bubble.width;
-                    let newHeight = bubble.height;
-                    let newX = bubble.x;
-                    let newY = bubble.y;
+                // Adjust dx, dy based on clamping for the tail movement
+                const actualDx = newBubbleX - bubble.x;
+                const actualDy = newBubbleY - bubble.y;
 
-                    // Adjust width/height based on resize handle
-                    switch (resizeHandle) {
-                        case 'topLeft':
-                            newWidth -= dx; newHeight -= dy;
-                            newX += dx / 2; newY += dy / 2;
-                            break;
-                        case 'topRight':
-                            newWidth += dx; newHeight -= dy;
-                            newX += dx / 2; newY += dy / 2;
-                            break;
-                        case 'bottomLeft':
-                            newWidth -= dx; newHeight += dy;
-                            newX += dx / 2; newY += dy / 2;
-                            break;
-                        case 'bottomRight':
-                            newWidth += dx; newHeight += dy;
-                            newX += dx / 2; newY += dy / 2;
-                            break;
-                    }
+                bubble.x = newBubbleX;
+                bubble.y = newBubbleY;
 
-                    bubble.width = Math.max(20, newWidth);
-                    bubble.height = Math.max(20, newHeight);
-                    bubble.x = newX;
-                    bubble.y = newY;
-
-                    lastMousePos = { x: mouseX, y: mouseY };
-                    draw();
-                } else if (mode === 'dragging' && isDraggingBubble && selectedBubbleIndex !== -1) {
-                    const bubble = speechBubbles[selectedBubbleIndex];
-                    const dx = mouseX - lastMousePos.x;
-                    const dy = mouseY - lastMousePos.y;
-                    bubble.x += dx;
-                    bubble.y += dy;
-                    if (!isDraggingTail) {
-                        bubble.tailTipX += dx;
-                        bubble.tailTipY += dy;
-                    }
-                    lastMousePos = { x: mouseX, y: mouseY };
-                    draw();
-                } else if (mode === 'panning' && isDraggingCanvas) {
-                    offset.x = lastOffset.x + (e.clientX - imageCanvas.getBoundingClientRect().left - startPan.x);
-                    offset.y = lastOffset.y + (e.clientY - imageCanvas.getBoundingClientRect().top - startPan.y);
-                    draw();
+                if (!isDraggingTail) { // Prevent conflicting updates if tail is being separately dragged
+                    bubble.tailTipX += actualDx;
+                    bubble.tailTipY += actualDy;
                 }
+                lastMousePos = { x: mouseX, y: mouseY };
+                draw();
+            } else if (mode === 'panning' && isDraggingCanvas) {
+                // Panning operates on canvas screen coordinates
+                offset.x = lastOffset.x + (e.clientX - imageCanvas.getBoundingClientRect().left - startPan.x);
+                offset.y = lastOffset.y + (e.clientY - imageCanvas.getBoundingClientRect().top - startPan.y);
+
+                // Clamp offset to keep original image (or placeholder world) within canvas view
+                const currentWorldWidthScaled = imgWidth * scale; // The scaled width of the "world" (image or placeholder)
+                const currentWorldHeightScaled = imgHeight * scale; // The scaled height of the "world"
+
+                // Clamp X offset
+                if (currentWorldWidthScaled < imageCanvas.width) {
+                    // If scaled world is smaller than canvas, center it
+                    offset.x = (imageCanvas.width - currentWorldWidthScaled) / 2;
+                } else {
+                    // If scaled world is larger, clamp between max left visible (0) and max right visible (canvasWidth - scaledWorldWidth)
+                    offset.x = Math.max(imageCanvas.width - currentWorldWidthScaled, Math.min(0, offset.x));
+                }
+
+                // Clamp Y offset
+                if (currentWorldHeightScaled < imageCanvas.height) {
+                    // If scaled world is smaller than canvas, center it
+                    offset.y = (imageCanvas.height - currentWorldHeightScaled) / 2;
+                } else {
+                    // If scaled world is larger, clamp between max top visible (0) and max bottom visible (canvasHeight - scaledWorldHeight)
+                    offset.y = Math.max(imageCanvas.height - currentWorldHeightScaled, Math.min(0, offset.y));
+                }
+                draw();
             }
         });
 
