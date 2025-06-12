@@ -349,6 +349,7 @@
         let lastOffset = { x: 0, y: 0 }; // Last saved offset for continuous panning
         let scale = 1; // Current zoom level
         let lastMousePos = { x: 0, y: 0 }; // Last mouse position for dragging bubbles/tail (in image-relative world coords)
+        let dragType = null; // 'body', 'handleOnly', 'tail', 'resize' - to differentiate drag behavior
 
         const DEFAULT_FONT_SIZE = 24;
         const DEFAULT_FONT_FAMILY = 'Arial';
@@ -508,7 +509,7 @@
                 // If no image, draw a placeholder background at (0,0)
                 // Its dimensions should be 'world' dimensions (unscaled, as scaling is already applied)
                 const defaultWorldWidth = imageCanvas.width / scale;
-                const defaultWorldHeight = imageCanvas.width / scale * (9/16); // Placeholder aspect ratio
+                const defaultWorldHeight = imageCanvas.height / scale; // Placeholder fills canvas height
                 ctx.fillStyle = '#f0f0f0';
                 ctx.fillRect(0, 0, defaultWorldWidth, defaultWorldHeight);
                 ctx.strokeStyle = '#cccccc';
@@ -561,13 +562,32 @@
                 maxTextWidth = Math.max(maxTextWidth, metrics.width);
             });
 
-            const padding = (bubble.fontSize * 0.7); // Intrinsic padding
-            const bubbleDrawingWidth = maxTextWidth + 2 * padding;
-            const bubbleDrawingHeight = (lines.length * textLineHeight) + 2 * padding;
+            const padding = (bubble.fontSize * 0.7);
+            const textCalculatedWidth = maxTextWidth + 2 * padding;
+            const textCalculatedHeight = (lines.length * textLineHeight) + 2 * padding;
 
-            // Update bubble object with calculated intrinsic dimensions for hit detection
+            // Determine the drawing dimensions:
+            // If bubble.resizedManually is true, use bubble.width and bubble.height (which were set by resize drag).
+            // Otherwise, use the text-calculated dimensions.
+            let bubbleDrawingWidth, bubbleDrawingHeight;
+
+            if (bubble.resizedManually) {
+                bubbleDrawingWidth = bubble.width;
+                bubbleDrawingHeight = bubble.height;
+            } else {
+                bubbleDrawingWidth = textCalculatedWidth;
+                bubbleDrawingHeight = textCalculatedHeight;
+            }
+
+            // Ensure minimum size even for manually resized bubbles
+            bubbleDrawingWidth = Math.max(20, bubbleDrawingWidth);
+            bubbleDrawingHeight = Math.max(20, bubbleDrawingHeight);
+
+            // IMPORTANT: Update bubble.width and bubble.height properties so that subsequent
+            // hit detection uses the correct *current* dimensions.
             bubble.width = bubbleDrawingWidth;
             bubble.height = bubbleDrawingHeight;
+
 
             const radius = 10; // Intrinsic corner radius
             const xLocal = -bubbleDrawingWidth / 2; // Local X relative to bubble's center
@@ -761,8 +781,9 @@
             currentDrawingBubble = {
                 x: initialX, // Image-relative world X
                 y: initialY, // Image-relative world Y
-                width: 0, // Will be calculated and stored intrinsically in saveSpeechBubbleBtn
-                height: 0, // Will be calculated and stored intrinsically in saveSpeechBubbleBtn
+                width: 0, // Will be calculated dynamically or set manually
+                height: 0, // Will be calculated dynamically or set manually
+                resizedManually: false, // New flag: set to true if user resizes with handles
                 text: '',
                 fontSize: DEFAULT_FONT_SIZE,
                 fontFamily: DEFAULT_FONT_FAMILY,
@@ -830,7 +851,7 @@
                     finalCtx.drawImage(originalImage, 0, 0, originalImage.width, originalImage.height);
                 } else {
                     const defaultWorldWidth = imageCanvas.width / scale;
-                    const defaultWorldHeight = imageCanvas.width / scale * (9/16);
+                    const defaultWorldHeight = imageCanvas.height / scale; // Placeholder fills canvas height
                     finalCtx.fillStyle = '#f0f0f0';
                     finalCtx.fillRect(0, 0, defaultWorldWidth, defaultWorldHeight);
                     finalCtx.strokeStyle = '#cccccc';
@@ -890,7 +911,7 @@
 
 2. Create Bubble: Click 'Create Speech Bubble' to open the editor. Enter text, choose styles, and click 'Save Changes'. A new bubble appears centered.
 
-3. Move/Resize Bubbles: Drag the bubble body to reposition. Drag the small squares at the corners to resize. Drag the small square at the tail tip to adjust the tail.
+3. Move/Resize Bubbles: Drag the bubble body to reposition. Ctrl+Drag the small squares at the corners to resize. Drag the small square at the tail tip to adjust the tail.
 
 4. Edit Bubble: Double-click an existing bubble to reopen its editor.
 
@@ -912,6 +933,9 @@
         let isResizingBubble = false;
         let isDraggingTail = false;
         let resizeHandle = null; // 'topLeft', 'topRight', etc.
+        // let dragType = null; // Removed duplicate declaration
+        // dragType is already declared at the top of the script
+        // with `let dragType = null;` to avoid "Identifier 'dragType' has already been declared" error.
 
         // Helper function to get mouse coordinates in image-relative world space
         function getMouseWorldCoordinates(e) {
@@ -940,8 +964,9 @@
             isDraggingTail = false;
             isDraggingCanvas = false;
             resizeHandle = null;
+            dragType = null; // Reset dragType
 
-            // 1. Check for tail handle drag (most specific and highest priority)
+            // Priority 1: Tail handle drag
             for (let i = speechBubbles.length - 1; i >= 0; i--) {
                 const bubble = speechBubbles[i];
                 if (bubble.tailOriginCorner !== 'none' && bubble.tailTipX !== undefined && bubble.tailTipY !== undefined) {
@@ -958,6 +983,7 @@
                          isDraggingTail = true;
                          lastMousePos = { x: mouseX, y: mouseY }; // Store image-relative world coordinates of mouse
                          mode = 'draggingTail';
+                         dragType = 'tail'; // Set dragType for tail
                          imageCanvas.classList.add('dragging-mode');
                          updateDebugInfo();
                          draw(); // Redraw to highlight selected bubble and tail handle
@@ -966,8 +992,7 @@
                 }
             }
 
-            // 2. Check for resize handles (next most specific)
-            // Iterate through bubbles to check for resize handle hits
+            // Priority 2: Check for resize handles (with or without Ctrl)
             for (let i = speechBubbles.length - 1; i >= 0; i--) {
                 const bubble = speechBubbles[i];
                 // Calculate bubble's rectangle coordinates in image-relative world space
@@ -990,21 +1015,28 @@
                     const hY = handles[handleName].y;
                     if (mouseX > hX - halfScaledHandle && mouseX < hX + halfScaledHandle &&
                         mouseY > hY - halfScaledHandle && mouseY < hY + halfScaledHandle) {
-                        selectedBubbleIndex = i; // Select the bubble being resized
-                        isResizingBubble = true;
-                        resizeHandle = handleName;
+                        selectedBubbleIndex = i;
+                        if (e.ctrlKey) {
+                            isResizingBubble = true;
+                            resizeHandle = handleName;
+                            mode = 'resizing';
+                            dragType = 'resize'; // Set dragType for resize
+                        } else {
+                            isDraggingBubble = true; // Still a bubble drag
+                            mode = 'dragging'; // Still in dragging mode
+                            dragType = 'handleOnly'; // Set dragType for handle-only movement
+                        }
                         lastMousePos = { x: mouseX, y: mouseY };
-                        mode = 'resizing';
                         imageCanvas.classList.add('dragging-mode');
                         updateDebugInfo();
                         draw(); // Redraw to show selection
-                        return;
+                        return; // Exit after finding a handle
                     }
                 }
             }
 
 
-            // 3. Check for general bubble drag (if not tail or resize handle)
+            // Priority 3: General bubble body drag (if not handle or tail)
             for (let i = speechBubbles.length - 1; i >= 0; i--) {
                 const bubble = speechBubbles[i];
                 // Simple AABB check (axis-aligned bounding box) for click detection in image-relative world space
@@ -1016,8 +1048,9 @@
                 if (mouseX >= minX && mouseX <= maxX && mouseY >= minY && mouseY <= maxY) {
                     selectedBubbleIndex = i;
                     isDraggingBubble = true;
-                    lastMousePos = { x: mouseX, y: mouseY };
                     mode = 'dragging';
+                    dragType = 'body'; // Set dragType for body drag
+                    lastMousePos = { x: mouseX, y: mouseY };
                     imageCanvas.classList.add('dragging-mode');
                     updateDebugInfo();
                     draw(); // Redraw to show selection
@@ -1025,9 +1058,8 @@
                 }
             }
 
-            // 4. If nothing else was clicked, start canvas panning
+            // Priority 4: Canvas panning
             isDraggingCanvas = true;
-            // Store mouse position relative to canvas element for panning calculation
             startPan = { x: e.clientX - imageCanvas.getBoundingClientRect().left, y: e.clientY - imageCanvas.getBoundingClientRect().top };
             lastOffset = { ...offset }; // Save current offset before starting pan
             mode = 'panning';
@@ -1043,7 +1075,7 @@
 
             // Define current image bounds (image-relative world coordinates)
             const imgWidth = originalImage ? originalImage.width : imageCanvas.width / scale;
-            const imgHeight = originalImage ? originalImage.height : imageCanvas.width / scale * (9/16); // Placeholder height
+            const imgHeight = originalImage ? originalImage.height : imageCanvas.height / scale; // Corrected placeholder height
 
             const imageWorldLeft = 0;
             const imageWorldTop = 0;
@@ -1063,71 +1095,94 @@
                 draw();
             } else if (mode === 'resizing' && isResizingBubble && selectedBubbleIndex !== -1 && resizeHandle) {
                 const bubble = speechBubbles[selectedBubbleIndex];
-                const dx = (mouseX - lastMousePos.x); // delta in image-relative world coordinates
-                const dy = (mouseY - lastMousePos.y);
 
-                let newWidth = bubble.width;
-                let newHeight = bubble.height;
-                let newX = bubble.x; // bubble center (image-relative world)
-                let newY = bubble.y;
+                // When resizing, we are setting the manual dimensions.
+                bubble.resizedManually = true; // Set flag to indicate manual resizing has occurred.
 
-                // Adjust width/height based on resize handle
+                // Calculate bubble's current top-left corner in image-relative world space
+                const currentBubbleRectX = bubble.x - bubble.width / 2;
+                const currentBubbleRectY = bubble.y - bubble.height / 2;
+
+                let fixedX, fixedY; // The coordinates of the corner opposite to the dragged handle
+
                 switch (resizeHandle) {
                     case 'topLeft':
-                        newWidth -= dx; newHeight -= dy;
-                        newX += dx / 2; newY += dy / 2;
+                        fixedX = currentBubbleRectX + bubble.width;
+                        fixedY = currentBubbleRectY + bubble.height;
                         break;
                     case 'topRight':
-                        newWidth += dx; newHeight -= dy;
-                        newX += dx / 2; newY += dy / 2;
+                        fixedX = currentBubbleRectX;
+                        fixedY = currentBubbleRectY + bubble.height;
                         break;
                     case 'bottomLeft':
-                        newWidth -= dx; newHeight += dy;
-                        newX += dx / 2; newY += dy / 2;
+                        fixedX = currentBubbleRectX + bubble.width;
+                        fixedY = currentBubbleRectY;
                         break;
                     case 'bottomRight':
-                        newWidth += dx; newHeight += dy;
-                        newX += dx / 2; newY += dy / 2;
+                        fixedX = currentBubbleRectX;
+                        fixedY = currentBubbleRectY;
                         break;
                 }
+
+                // Calculate new width and height based on mouse position and fixed point
+                let newWidth = Math.abs(mouseX - fixedX);
+                let newHeight = Math.abs(mouseY - fixedY);
 
                 // Apply minimum dimensions
                 newWidth = Math.max(20, newWidth);
                 newHeight = Math.max(20, newHeight);
 
+                // Calculate new center based on mouse position, fixed point, and new dimensions
+                // The new center is the midpoint between the current mouse position and the fixed corner
+                let newBubbleX = (mouseX + fixedX) / 2;
+                let newBubbleY = (mouseY + fixedY) / 2;
+
+
                 // Clamp bubble position and size to image bounds if saving within bounds and originalImage exists
                 if (saveImageWithinBoundsCheckbox.checked && originalImage) {
-                    let potentialMinX = newX - newWidth / 2;
-                    let potentialMaxX = newX + newWidth / 2;
-                    let potentialMinY = newY - newHeight / 2;
-                    let potentialMaxY = newY + newHeight / 2;
+                    // Re-calculate effective top-left, bottom-right of the potentially resized bubble
+                    let effectiveMinX = newBubbleX - newWidth / 2;
+                    let effectiveMaxX = newBubbleX + newWidth / 2;
+                    let effectiveMinY = newBubbleY - newHeight / 2;
+                    let effectiveMaxY = newBubbleY + newHeight / 2;
 
-                    if (potentialMinX < imageWorldLeft) {
-                        newWidth -= (imageWorldLeft - potentialMinX);
-                        newX = imageWorldLeft + newWidth / 2;
+                    let clampedWidth = newWidth;
+                    let clampedHeight = newHeight;
+                    let clampedX = newBubbleX;
+                    let clampedY = newBubbleY;
+
+                    // Clamp X
+                    if (effectiveMinX < imageWorldLeft) {
+                        clampedWidth = newWidth - (imageWorldLeft - effectiveMinX);
+                        clampedX = imageWorldLeft + clampedWidth / 2;
                     }
-                    if (potentialMaxX > imageWorldRight) {
-                        newWidth -= (potentialMaxX - imageWorldRight);
-                        newX = imageWorldRight - newWidth / 2;
+                    if (effectiveMaxX > imageWorldRight) {
+                        clampedWidth = newWidth - (effectiveMaxX - imageWorldRight);
+                        clampedX = imageWorldRight - clampedWidth / 2;
                     }
-                    if (potentialMinY < imageWorldTop) {
-                        newHeight -= (imageWorldTop - potentialMinY);
-                        newY = imageWorldTop + newHeight / 2;
+                    // Clamp Y
+                    if (effectiveMinY < imageWorldTop) {
+                        clampedHeight = newHeight - (imageWorldTop - effectiveMinY);
+                        clampedY = imageWorldTop + clampedHeight / 2;
                     }
-                    if (potentialMaxY > imageWorldBottom) {
-                        newHeight -= (potentialMaxY - imageWorldBottom);
-                        newY = imageWorldBottom - newHeight / 2;
+                    if (effectiveMaxY > imageWorldBottom) {
+                        clampedHeight = newHeight - (effectiveMaxY - imageWorldBottom);
+                        clampedY = imageWorldBottom - clampedHeight / 2;
                     }
-                    newWidth = Math.max(20, newWidth); // Re-apply min width after clamping
-                    newHeight = Math.max(20, newHeight); // Re-apply min height after clamping
+
+                    // Ensure minimum size after clamping
+                    bubble.width = Math.max(20, clampedWidth);
+                    bubble.height = Math.max(20, clampedHeight);
+                    bubble.x = clampedX;
+                    bubble.y = clampedY;
+
+                } else {
+                    bubble.width = newWidth;
+                    bubble.height = newHeight;
+                    bubble.x = newBubbleX;
+                    bubble.y = newBubbleY;
                 }
 
-                bubble.width = newWidth;
-                bubble.height = newHeight;
-                bubble.x = newX;
-                bubble.y = newY;
-
-                lastMousePos = { x: mouseX, y: mouseY };
                 draw();
 
             } else if (mode === 'dragging' && isDraggingBubble && selectedBubbleIndex !== -1) {
@@ -1151,7 +1206,8 @@
                 bubble.x = newBubbleX;
                 bubble.y = newBubbleY;
 
-                if (!isDraggingTail) { // Prevent conflicting updates if tail is being separately dragged
+                // Only move the tail if it's a 'body' drag, not a 'handleOnly' drag
+                if (dragType === 'body') {
                     bubble.tailTipX += actualDx;
                     bubble.tailTipY += actualDy;
                 }
@@ -1194,6 +1250,7 @@
             isResizingBubble = false;
             isDraggingTail = false;
             resizeHandle = null;
+            dragType = null; // Reset dragType
 
             if (mode !== 'drawing') { // If not drawing a new bubble, revert cursor/mode to idle
                 mode = 'idle';
@@ -1211,6 +1268,7 @@
             isResizingBubble = false;
             isDraggingTail = false;
             resizeHandle = null;
+            dragType = null; // Reset dragType
 
             if (mode !== 'drawing') {
                 mode = 'idle';
@@ -1335,11 +1393,10 @@
             bubbleToUpdate.borderOpacity = newBorderOpacity;
             bubbleToUpdate.fontColor = newFontColor;
 
-            // Calculate intrinsic width/height based on new text and font size
+            // Calculate intrinsic text dimensions (for auto-sizing or initial setup)
             const tempTextCanvas = document.createElement('canvas');
             const tempTextCtx = tempTextCanvas.getContext('2d');
-            tempTextCtx.font = `${newFontSize}px ${newFontFamily}`; // Use newFontSize directly for intrinsic measurement
-
+            tempTextCtx.font = `${newFontSize}px ${newFontFamily}`;
             const tempLines = newText.split('\n');
             let tempMaxTextWidth = 0;
             tempLines.forEach(line => {
@@ -1347,19 +1404,33 @@
             });
             const tempTextLineHeight = newFontSize * 1.2;
             const tempPadding = (newFontSize * 0.7);
-            const tempBubbleWidth = tempMaxTextWidth + 2 * tempPadding;
-            const tempBubbleHeight = (tempLines.length * tempTextLineHeight) + 2 * tempPadding;
+            const calculatedWidth = tempMaxTextWidth + 2 * tempPadding;
+            const calculatedHeight = (tempLines.length * tempTextLineHeight) + 2 * tempPadding;
 
-            // Store these intrinsic dimensions
-            bubbleToUpdate.width = tempBubbleWidth;
-            bubbleToUpdate.height = tempBubbleHeight;
+            // If the bubble has NOT been manually resized (or it's a brand new bubble),
+            // its dimensions should be based on its content.
+            if (!bubbleToUpdate.resizedManually || currentDrawingBubble) {
+                bubbleToUpdate.width = Math.max(20, calculatedWidth); // Ensure minimum width
+                bubbleToUpdate.height = Math.max(20, calculatedHeight); // Ensure minimum height
 
-            // Calculate initial tailTipX and tailTipY if a tail corner is selected (or update if corner changed)
+                // If text is empty for a newly created bubble, give it a default visual size.
+                if (newText.trim() === '' && currentDrawingBubble) {
+                    bubbleToUpdate.width = 100; // Default width for empty new bubble
+                    bubbleToUpdate.height = 50;  // Default height for empty new bubble
+                }
+            }
+            // If bubbleToUpdate.resizedManually is true, its width/height are already set
+            // and we do NOT override them here.
+
+            // Calculate initial tailTipX and tailTipY
             if (newTailOriginCorner !== 'none') {
                 let targetX, targetY;
-                // Calculate position relative to bubble's image-relative world center and intrinsic size
-                const bubbleRectX = bubbleToUpdate.x - tempBubbleWidth / 2;
-                const bubbleRectY = bubbleToUpdate.y - tempBubbleHeight / 2;
+                // Use the bubbleToUpdate's *current* width and height (either text-based or manually set)
+                const effectiveBubbleWidth = bubbleToUpdate.width;
+                const effectiveBubbleHeight = bubbleToUpdate.height;
+
+                const bubbleRectX = bubbleToUpdate.x - effectiveBubbleWidth / 2;
+                const bubbleRectY = bubbleToUpdate.y - effectiveBubbleHeight / 2;
 
                 switch (newTailOriginCorner) {
                     case 'topLeft':
@@ -1367,22 +1438,21 @@
                         targetY = bubbleRectY - DEFAULT_TAIL_LENGTH;
                         break;
                     case 'topRight':
-                        targetX = bubbleRectX + tempBubbleWidth + DEFAULT_TAIL_LENGTH;
+                        targetX = bubbleRectX + effectiveBubbleWidth + DEFAULT_TAIL_LENGTH;
                         targetY = bubbleRectY - DEFAULT_TAIL_LENGTH;
                         break;
                     case 'bottomLeft':
                         targetX = bubbleRectX - DEFAULT_TAIL_LENGTH;
-                        targetY = bubbleRectY + tempBubbleHeight + DEFAULT_TAIL_LENGTH;
+                        targetY = bubbleRectY + effectiveBubbleHeight + DEFAULT_TAIL_LENGTH;
                         break;
                     case 'bottomRight':
-                        targetX = bubbleRectX + tempBubbleWidth + DEFAULT_TAIL_LENGTH;
-                        targetY = bubbleRectY + tempBubbleHeight + DEFAULT_TAIL_LENGTH;
+                        targetX = bubbleRectX + effectiveBubbleWidth + DEFAULT_TAIL_LENGTH;
+                        targetY = bubbleRectY + effectiveBubbleHeight + DEFAULT_TAIL_LENGTH;
                         break;
                 }
                 bubbleToUpdate.tailTipX = targetX;
                 bubbleToUpdate.tailTipY = targetY;
             } else {
-                // If tail is removed, clear its tip coordinates
                 bubbleToUpdate.tailTipX = undefined;
                 bubbleToUpdate.tailTipY = undefined;
             }
