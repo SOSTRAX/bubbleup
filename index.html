@@ -1417,6 +1417,16 @@
                 this.height = Math.abs(this.y2 - this.y1);
             }
 
+            // Track which handle is being dragged
+            startDragHandle = null;
+            endDragHandle = null;
+
+            // Reset drag handles
+            resetDragHandles() {
+                this.startDragHandle = null;
+                this.endDragHandle = null;
+            }
+
             draw(ctx, isSelected = false, isCtrlPressed = false) {
                 ctx.save();
                 // For arrow, rotation is usually implicit in x1, y1, x2, y2.
@@ -1621,14 +1631,19 @@
              * @returns {string|null} 'start' or 'end' or null.
              */
             onResizeHandle(mouseX, mouseY) {
-                const handle = this.getHandles()[0];
-                // Calculate distance from mouse to rotated handle center
-                const dx = mouseX - handle.rotatedX;
-                const dy = mouseY - handle.rotatedY;
-                // Use a larger hit radius than the visual handle size
                 const hitRadius = 15;
-                if (dx * dx + dy * dy <= hitRadius * hitRadius) {
-                    return 'resize';
+                const dx1 = mouseX - this.x1;
+                const dy1 = mouseY - this.y1;
+                const dx2 = mouseX - this.x2;
+                const dy2 = mouseY - this.y2;
+                
+                if (dx1 * dx1 + dy1 * dy1 <= hitRadius * hitRadius) {
+                    this.startDragHandle = true;
+                    return 'start';
+                }
+                if (dx2 * dx2 + dy2 * dy2 <= hitRadius * hitRadius) {
+                    this.endDragHandle = true;
+                    return 'end';
                 }
                 return null;
             }
@@ -1678,7 +1693,40 @@
                 this.updateBoundingBox(); // Update bounding box after point change
             }
 
-             getCenter() {
+             /**
+             * Gets resize handles for the arrow (one at each end).
+             * @returns {Array} Array of handle objects.
+             */
+            getHandles() {
+                const handleSize = 8;
+                
+                // Calculate handle positions at both ends
+                const handle1 = {
+                    x: this.x1,
+                    y: this.y1,
+                    width: handleSize,
+                    height: handleSize,
+                    size: handleSize,
+                    type: 'resize',
+                    originalX: this.x1,
+                    originalY: this.y1
+                };
+
+                const handle2 = {
+                    x: this.x2,
+                    y: this.y2,
+                    width: handleSize,
+                    height: handleSize,
+                    size: handleSize,
+                    type: 'resize',
+                    originalX: this.x2,
+                    originalY: this.y2
+                };
+                
+                return [handle1, handle2];
+            }
+
+            getCenter() {
                 // For an arrow, the center is the midpoint of its line.
                 return {
                     x: (this.x1 + this.x2) / 2,
@@ -2013,20 +2061,53 @@
 
             // Handle dragging existing shape
             if (isDragging && selectedShape) {
-                const dx = x - startX;
-                const dy = y - startY;
-
-                selectedShape.x += dx;
-                selectedShape.y += dy;
-                if (selectedShape instanceof SpeechBubble) {
-                    selectedShape.tailX += dx;
-                    selectedShape.tailY += dy;
-                } else if (selectedShape instanceof Arrow) {
-                    selectedShape.x1 += dx;
-                    selectedShape.y1 += dy;
-                    selectedShape.x2 += dx;
-                    selectedShape.y2 += dy;
-                    selectedShape.updateBoundingBox();
+                        // For Arrow, handle individual handle dragging with relative position locking
+                if (selectedShape instanceof Arrow) {
+                    // Check which handle was clicked
+                    const handle = selectedShape.onResizeHandle(x, y);
+                    
+                    if (handle === 'start') {
+                        // Move start handle while maintaining relative position to end
+                        const dx = x - selectedShape.x1;
+                        const dy = y - selectedShape.y1;
+                        selectedShape.x1 = x;
+                        selectedShape.y1 = y;
+                        // Update shape position based on new start point
+                        selectedShape.x = (selectedShape.x2 + selectedShape.x1) / 2;
+                        selectedShape.y = (selectedShape.y2 + selectedShape.y1) / 2;
+                        selectedShape.updateBoundingBox();
+                    } else if (handle === 'end') {
+                        // Move end handle while maintaining relative position to start
+                        const dx = x - selectedShape.x2;
+                        const dy = y - selectedShape.y2;
+                        selectedShape.x2 = x;
+                        selectedShape.y2 = y;
+                        // Update shape position based on new end point
+                        selectedShape.x = (selectedShape.x2 + selectedShape.x1) / 2;
+                        selectedShape.y = (selectedShape.y2 + selectedShape.y1) / 2;
+                        selectedShape.updateBoundingBox();
+                    } else {
+                        // If not on a handle, move the entire shape
+                        const dx = x - startX;
+                        const dy = y - startY;
+                        selectedShape.x += dx;
+                        selectedShape.y += dy;
+                        selectedShape.x1 += dx;
+                        selectedShape.y1 += dy;
+                        selectedShape.x2 += dx;
+                        selectedShape.y2 += dy;
+                        selectedShape.updateBoundingBox();
+                    }
+                } else {
+                    // For other shapes, move the entire shape
+                    const dx = x - startX;
+                    const dy = y - startY;
+                    selectedShape.x += dx;
+                    selectedShape.y += dy;
+                    if (selectedShape instanceof SpeechBubble) {
+                        selectedShape.tailX += dx;
+                        selectedShape.tailY += dy;
+                    }
                 }
                 startX = x; // Update start for next move
                 startY = y;
@@ -2284,44 +2365,78 @@
             imageInput.click(); // Trigger hidden file input click
         });
 
-        imageInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
+        imageInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
             if (file) {
-                document.getElementById('fileNameDisplay').textContent = file.name;
-            } else {
-                document.getElementById('fileNameDisplay').textContent = '';
-            }
-            if (file) {
+                // Clear existing shapes and reset state
+                shapes = [];
+                selectedShape = null;
+                drawingMode = null;
+                isDragging = false;
+                isResizing = false;
+                isRotating = false;
+                resizeHandle = null;
+                rotationHandle = null;
+                isTailMoving = false;
+                
+                // Reset pan and zoom
+                currentZoom = 1;
+                panX = 0;
+                panY = 0;
+                
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const img = new Image();
                     img.onload = () => {
                         uploadedImage = img;
-                        // Adjust canvas zoom and pan to fit image if canvas is smaller than image
-                        const aspectRatioCanvas = canvas.width / canvas.height;
-                        const aspectRatioImage = img.width / img.height;
-
-                        if (img.width > canvas.width || img.height > canvas.height) {
-                            if (aspectRatioImage > aspectRatioCanvas) {
-                                currentZoom = canvas.width / img.width;
-                            } else {
-                                currentZoom = canvas.height / img.height;
-                            }
-                             // Center image initially when loaded
-                            panX = (canvas.width - img.width * currentZoom) / 2;
-                            panY = (canvas.height - img.height * currentZoom) / 2;
-                        } else {
-                            currentZoom = 1; // Default zoom if image fits
-                            panX = (canvas.width - img.width) / 2;
-                            panY = (canvas.height - img.height) / 2;
-                        }
-
+                        
+                        // Calculate optimal zoom level to fit image in canvas
+                        const canvasWidth = canvas.width;
+                        const canvasHeight = canvas.height;
+                        const imageAspectRatio = img.width / img.height;
+                        const canvasAspectRatio = canvasWidth / canvasHeight;
+                        
+                        let zoomX = canvasWidth / img.width;
+                        let zoomY = canvasHeight / img.height;
+                        let finalZoom = Math.min(zoomX, zoomY) * 0.95; // Leave a small margin
+                        
+                        // Calculate pan position to center the image
+                        const imageWidth = img.width * finalZoom;
+                        const imageHeight = img.height * finalZoom;
+                        panX = (canvasWidth - imageWidth) / 2;
+                        panY = (canvasHeight - imageHeight) / 2;
+                        
+                        // Update zoom and pan
+                        currentZoom = finalZoom;
+                        
+                        // Redraw canvas with new image
                         drawCanvas();
                     };
                     img.src = e.target.result;
                 };
                 reader.readAsDataURL(file);
             }
+        });
+
+        createBubbleBtn.addEventListener('click', () => {
+            showPointer('bubblePointer', 'Drag To Place Bubble');
+        });
+
+        createArrowBtn.addEventListener('click', () => {
+            showPointer('arrowPointer', 'Drag To Make Arrow');
+        });
+
+        createBubbleBtn.addEventListener('click', () => {
+            console.log('1. Create Bubble button clicked.');
+            drawingMode = 'bubble';
+            selectedShape = null; // Deselect any existing shape
+            isDragging = false;
+            isResizing = false;
+            isRotating = false;
+            resizeHandle = null;
+            rotationHandle = null;
+            isTailMoving = false;
+            drawCanvas();
         });
 
         createBubbleBtn.addEventListener('click', () => {
@@ -2627,6 +2742,35 @@
             arrowEditorModal.classList.add('hidden');
             selectedShape = null; // Deselect on cancel
             drawCanvas();
+        });
+
+        clearCanvasBtn.addEventListener('click', () => {
+            showConfirmModal('Are you sure you want to clear the entire canvas?', (confirmed) => {
+                if (confirmed) {
+                    // Reset all canvas state
+                    uploadedImage = null;
+                    shapes = [];
+                    selectedShape = null;
+                    drawingMode = null;
+                    currentZoom = 1;
+                    panX = 0;
+                    panY = 0;
+                    isDragging = false;
+                    isResizing = false;
+                    resizeHandle = null;
+                    isRotating = false;
+                    rotationHandle = null;
+                    isTailMoving = false;
+                    
+                    // Reset file input to allow selecting the same file again
+                    const fileInput = document.getElementById('imageInput');
+                    if (fileInput) {
+                        fileInput.value = '';
+                    }
+                    
+                    drawCanvas();
+                }
+            });
         });
 
         deleteArrowBtn.addEventListener('click', () => {
