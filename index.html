@@ -12,6 +12,8 @@
         /* Apply Inter font family */
         body {
             font-family: 'Inter', sans-serif;
+            opacity: 0; /* Initially hide the body to prevent FOUC */
+            transition: opacity 0.3s ease-in-out; /* Smooth fade-in */
         }
 
         /* Pointer animation styles */
@@ -98,14 +100,14 @@
             overflow: hidden; /* Prevent body scroll */
         }
         .sidebar {
-            width: 280px; /* Fixed width for the sidebar */
-            padding: 1rem;
-            background-color: #f3f4f6; /* Light gray background */
+            width: 20rem; /* w-80 */
+            background-color: white;
+            padding: 0.75rem; /* p-3 */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 0.75rem; /* Space between buttons */
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-            overflow-y: auto; /* Enable scrolling for many buttons */
+            gap: 0.5rem; /* gap-2 */
         }
         .canvas-container {
             flex-grow: 1; /* Canvas takes remaining space */
@@ -124,35 +126,28 @@
         /* Styles for modals */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
+            width: 100%;
+            z-index: 50;
             display: flex;
-            justify-content: center;
             align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
+            justify-content: center;
+            padding: 1rem;
         }
         .modal-content {
             background-color: white;
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-            width: 90%;
-            max-width: 500px;
-            max-height: 90vh; /* Limit height for scrollable content */
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+            padding: 1rem;
+            border-radius: 0.5rem; /* Rounded-lg */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* Shadow-2xl */
+            width: 100%;
+            max-width: 42rem; /* Max-w-3xl */
+            max-height: 85vh; /* Set max height */
+            overflow-y: auto; /* Enable scroll on overflow */
         }
         .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
+            margin-bottom: 0.5rem;
         }
         .form-group label {
             font-weight: 600;
@@ -237,6 +232,35 @@
     <div class="container">
         <!-- Left Sidebar -->
         <div class="sidebar">
+            <!-- File Menu Dropdown -->
+            <div class="relative" id="fileMenuContainer">
+                <button id="fileMenuBtn" class="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out flex items-center justify-center">
+                    <i class="fas fa-file-alt mr-2"></i>
+                    <span>File</span>
+                    <i class="fas fa-chevron-down ml-auto pl-2"></i>
+                </button>
+                <div id="fileMenuDropdown" class="absolute left-0 mt-2 w-full rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-20">
+                    <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="fileMenuBtn">
+                        <a href="#" id="exportToFileBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-file-export mr-2"></i>Export Project (.json)</a>
+                        <a href="#" id="importFromFileBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-file-import mr-2"></i>Import Project (.json)</a>
+                        <div class="border-t border-gray-200 my-1"></div>
+                        <a href="#" id="saveImageBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-save mr-2"></i>Save as Image (.png)</a>
+                        <a href="#" id="saveClipBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-video mr-2"></i>Save as Clip (.webm)</a>
+                    </div>
+                </div>
+            </div>
+            <input type="file" id="fileInput" class="hidden" accept=".json">
+            <div class="border-t border-gray-300 my-2"></div>
+
+            <!-- Pointer Elements -->
+            <div id="saveCanvasPointer" class="pointer-overlay hidden">
+                <div class="pointer-pointer"></div>
+                <div class="pointer-text">Save Canvas</div>
+            </div>
+            <div id="loadCanvasPointer" class="pointer-overlay hidden">
+                <div class="pointer-pointer"></div>
+                <div class="pointer-text">Load Canvas</div>
+            </div>
 
 
             <!-- Feature Buttons -->
@@ -262,14 +286,7 @@
                 <div class="pointer-text">Drag To Make Arrow</div>
             </div>
 
-            <div class="flex space-x-2">
-                <button id="saveImageBtn" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-gray-800 font-bold py-2 px-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                    <i class="fas fa-save mr-2"></i>Save Image
-                </button>
-                <button id="saveCanvasBtn" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-gray-800 font-bold py-2 px-2 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                    <i class="fas fa-crop mr-2"></i>Save Canvas
-                </button>
-            </div>
+
 
             <button id="clearCanvasBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
                 <i class="fas fa-trash-alt mr-2"></i>Clear Canvas
@@ -280,7 +297,7 @@
             </button>
             <div class="text-center text-xl text-blue-600 mt-4 font-bold">Double Click New Objects To Edit Properties</div>
 
-            <div class="mt-8">
+            <div class="mt-4">
                 <h2 class="text-lg font-semibold mb-2 text-gray-700">Canvas Controls</h2>
                 <div class="flex flex-col gap-2">
                     <button id="zoomInBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
@@ -289,9 +306,10 @@
                     <button id="zoomOutBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
                         <i class="fas fa-search-minus mr-2"></i>Zoom -
                     </button>
-                    <button id="zoomResetBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                        <i class="fas fa-redo mr-2"></i>Zoom Reset
+                    <button id="resetZoomBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
+                        <i class="fas fa-compress-arrows-alt mr-2"></i>Reset
                     </button>
+                    <div id="zoomLevelLabel" class="text-center text-sm text-gray-600 mt-2">Zoom: 100%</div>
                 </div>
             </div>
         </div>
@@ -303,10 +321,10 @@
     </div>
 
     <!-- Speech Bubble Editor Modal -->
-    <div id="bubbleEditorModal" class="modal-overlay hidden">
+    <div id="bubbleEditorModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full z-50 flex items-center justify-center p-4">
         <div class="modal-content">
             <h2 class="text-xl font-bold mb-4 text-gray-800">Edit Speech Bubble</h2>
-            <form id="bubbleForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                 <div class="form-group">
                     <label for="bubbleText">Text String:</label>
                     <input type="text" id="bubbleText" class="w-full">
@@ -401,7 +419,7 @@
                     <label for="bubbleFlipText" class="mb-0">Flip Text 180 degrees</label>
                 </div>
             </form>
-            <div class="flex justify-end gap-2 mt-6">
+            <div class="flex justify-end gap-2 mt-4">
                 <button id="deleteBubbleBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
                     Delete Bubble
                 </button>
@@ -419,7 +437,7 @@
     <div id="arrowEditorModal" class="modal-overlay hidden">
         <div class="modal-content">
             <h2 class="text-xl font-bold mb-4 text-gray-800">Edit Stretchable Arrow</h2>
-            <form id="arrowForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form id="arrowForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                 <div class="form-group">
                     <label for="arrowText">Text String:</label>
                     <input type="text" id="arrowText" class="w-full">
@@ -487,7 +505,7 @@
                     <label for="arrowFlipText" class="mb-0">Flip Text 180 degrees</label>
                 </div>
             </form>
-            <div class="flex justify-end gap-2 mt-6">
+            <div class="flex justify-end gap-2 mt-4">
                 <button id="deleteArrowBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
                     Delete Arrow
                 </button>
@@ -550,13 +568,13 @@
     <script>
         // Global variables
         let isCtrlPressed = false;
+        let uploadedImage = null; // Store the uploaded image
 
         // Get canvas and context
         const canvas = document.getElementById('myCanvas');
         const ctx = canvas.getContext('2d');
 
         // --- Canvas State Variables ---
-        let uploadedImage = null;
         let shapes = []; // Array to hold SpeechBubble and Arrow objects
         let selectedShape = null; // Currently selected shape for dragging/resizing/editing
         let drawingMode = null; // 'bubble' or 'arrow' or null
@@ -581,7 +599,7 @@
         const createBubbleBtn = document.getElementById('createBubbleBtn');
         const createArrowBtn = document.getElementById('createArrowBtn');
         const saveImageBtn = document.getElementById('saveImageBtn');
-        const saveCanvasBtn = document.getElementById('saveCanvasBtn');
+        const saveClipBtn = document.getElementById('saveClipBtn');
         const clearCanvasBtn = document.getElementById('clearCanvasBtn');
         const howToBtn = document.getElementById('howToBtn');
         const howToModal = document.getElementById('howToModal');
@@ -765,6 +783,30 @@
             const mouseX = (clientX - rect.left - panX) / currentZoom;
             const mouseY = (clientY - rect.top - panY) / currentZoom;
             return { x: mouseX, y: mouseY };
+        }
+
+        /**
+         * Gets raw mouse coordinates relative to the canvas element, without pan/zoom.
+         * @param {MouseEvent|TouchEvent} event - The mouse or touch event.
+         * @returns {object} {x, y} coordinates.
+         */
+        function getRawMousePos(event) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            let clientX, clientY;
+            if (event.touches && event.touches.length > 0) {
+                clientX = event.touches[0].clientX;
+                clientY = event.touches[0].clientY;
+            } else {
+                clientX = event.clientX;
+                clientY = event.clientY;
+            }
+
+            const x = (clientX - rect.left) * scaleX;
+            const y = (clientY - rect.top) * scaleY;
+            return { x, y };
         }
 
 
@@ -1754,25 +1796,38 @@
         let arrowPointerTimeout;
 
         // Show pointer animation
-        function showPointer(pointerId, text) {
-            const pointer = document.getElementById(pointerId);
-            const pointerText = pointer.querySelector('.pointer-text');
-            pointerText.textContent = text;
-            pointer.classList.remove('hidden');
+        function showPointer(buttonId, text) {
+            const button = document.getElementById(buttonId);
+            if (!button) return;
+
+            // Create a temporary pointer element
+            const pointer = document.createElement('div');
+            pointer.className = 'pointer-overlay absolute';
+            pointer.style.display = 'block';
             
-            // Hide after 5 seconds
-            clearTimeout(bubblePointerTimeout);
-            clearTimeout(arrowPointerTimeout);
+            // Position it relative to the button
+            const rect = button.getBoundingClientRect();
+            pointer.style.left = `${rect.left + window.scrollX}px`;
+            pointer.style.top = `${rect.top + window.scrollY}px`;
             
-            if (pointerId === 'bubblePointer') {
-                bubblePointerTimeout = setTimeout(() => {
-                    pointer.classList.add('hidden');
-                }, 5000);
-            } else {
-                arrowPointerTimeout = setTimeout(() => {
-                    pointer.classList.add('hidden');
-                }, 5000);
-            }
+            // Add pointer and text elements
+            const pointerDiv = document.createElement('div');
+            pointerDiv.className = 'pointer-pointer';
+            pointerDiv.style.animation = 'bounce 1s infinite';
+            pointer.appendChild(pointerDiv);
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'pointer-text';
+            textDiv.textContent = text;
+            pointer.appendChild(textDiv);
+            
+            // Add to body
+            document.body.appendChild(pointer);
+            
+            // Remove after 2 seconds
+            setTimeout(() => {
+                pointer.remove();
+            }, 2000);
         }
 
         // Hide pointer when clicking on canvas
@@ -2214,6 +2269,18 @@
          * Handles mouse up (or touch end) events on the canvas.
          * @param {MouseEvent|TouchEvent} event - The event object.
          */
+        function handleWheel(e) {
+            e.preventDefault(); // Prevent page from scrolling
+            const { x, y } = getRawMousePos(e);
+            if (e.deltaY < 0) {
+                // Scroll up -> zoom in
+                zoomIn(x, y);
+            } else {
+                // Scroll down -> zoom out
+                zoomOut(x, y);
+            }
+        }
+
         function handleMouseUp(event) {
             console.log('5. Mouse up on canvas.');
             if (drawingMode && isResizing && selectedShape) {
@@ -2298,6 +2365,7 @@
         // --- Double Click for Editing Modals ---
 
         canvas.addEventListener('dblclick', handleDoubleClick);
+        canvas.addEventListener('wheel', handleWheel, { passive: false });
 
         function handleDoubleClick(event) {
             const { x, y } = getMousePos(event);
@@ -2317,6 +2385,7 @@
                 }
             }
         }
+
 
 
         // --- Keyboard Events ---
@@ -2358,6 +2427,153 @@
             drawCanvas();
         });
 
+
+        // --- File Menu and Save/Load Functions ---
+        const fileMenuBtn = document.getElementById('fileMenuBtn');
+        const fileMenuDropdown = document.getElementById('fileMenuDropdown');
+        const exportToFileBtn = document.getElementById('exportToFileBtn');
+        const importFromFileBtn = document.getElementById('importFromFileBtn');
+        const fileInput = document.getElementById('fileInput');
+        const zoomLevelLabel = document.getElementById('zoomLevelLabel');
+
+        // Toggle File Menu
+        fileMenuBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            fileMenuDropdown.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        window.addEventListener('click', (event) => {
+            if (!fileMenuBtn.contains(event.target)) {
+                fileMenuDropdown.classList.add('hidden');
+            }
+        });
+
+        // Export canvas state to a JSON file
+        function exportToFile() {
+            try {
+                // Prompt for a filename
+                let fileName = prompt("Please enter a name for your project file:", "bubbleup-project");
+                if (fileName === null || fileName.trim() === "") {
+                    console.log("Export cancelled by user.");
+                    return; // Abort if user cancels or enters an empty name
+                }
+
+                // Ensure the filename ends with .json
+                if (!fileName.toLowerCase().endsWith('.json')) {
+                    fileName += '.json';
+                }
+
+                const canvasState = {
+                    image: uploadedImage ? uploadedImage.src : null,
+                    shapes: shapes.map(shape => {
+                        const shapeData = { type: shape.constructor.name, properties: {} };
+                        Object.assign(shapeData.properties, shape);
+                        return shapeData;
+                    }),
+                    zoom: currentZoom,
+                    panX: panX,
+                    panY: panY
+                };
+
+                const jsonString = JSON.stringify(canvasState, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName; // Use the user-provided filename
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showPointer('exportToFileBtn', 'Exported to file!');
+            } catch (error) {
+                console.error('Error exporting canvas state:', error);
+                alert('Error exporting canvas state: ' + error.message);
+            }
+        }
+
+        // Main function to apply a state object to the canvas
+        function applyState(state) {
+            shapes.length = 0;
+            uploadedImage = null;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const loadImageAndRestore = () => {
+                if (state.shapes && Array.isArray(state.shapes)) {
+                    shapes.push(...state.shapes.map(shapeData => {
+                        let shape;
+                        if (shapeData.type === 'SpeechBubble') {
+                            shape = new SpeechBubble(0,0,0,0); // Temp values
+                        } else if (shapeData.type === 'Arrow') {
+                            shape = new Arrow(0,0,0,0); // Temp values
+                        }
+                        Object.assign(shape, shapeData.properties);
+                        return shape;
+                    }));
+                }
+
+                currentZoom = state.zoom || 1;
+                panX = state.panX || 0;
+                panY = state.panY || 0;
+
+                updateZoomLabel();
+                drawCanvas();
+                console.log('Canvas state restored successfully.');
+            };
+
+            if (state.image) {
+                const img = new Image();
+                img.onload = () => {
+                    uploadedImage = img;
+                    loadImageAndRestore();
+                };
+                img.onerror = () => {
+                    console.error("Failed to load image from state.");
+                    alert("Error: The saved image could not be loaded.");
+                    loadImageAndRestore(); // Still load shapes
+                };
+                img.src = state.image;
+            } else {
+                loadImageAndRestore();
+            }
+        }
+
+        // Add event listeners for file operations
+        exportToFileBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            exportToFile();
+            fileMenuDropdown.classList.add('hidden');
+        });
+
+        importFromFileBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            fileInput.click();
+            fileMenuDropdown.classList.add('hidden');
+        });
+
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const state = JSON.parse(e.target.result);
+                    applyState(state);
+                    showPointer('importFromFileBtn', 'Imported from file!');
+                } catch (error) {
+                    console.error('Error importing file:', error);
+                    alert('Error importing file: ' + error.message);
+                } finally {
+                    fileInput.value = ''; // Reset for next import
+                }
+            };
+            reader.onerror = () => alert('Error reading the file.');
+            reader.readAsText(file);
+        });
 
         // --- Button Event Listeners ---
 
@@ -2490,7 +2706,7 @@
             document.body.removeChild(link);
         });
 
-        saveCanvasBtn.addEventListener('click', function() {
+        saveClipBtn.addEventListener('click', function() {
             // Create download link for the entire canvas
             const link = document.createElement('a');
             link.download = 'canvas-view.png';
@@ -2525,90 +2741,51 @@
 
 
         // --- Zoom Controls ---
-        zoomInBtn.addEventListener('click', () => {
+        function updateZoomLabel() {
+            zoomLevelLabel.textContent = `Zoom: ${Math.round(currentZoom * 100)}%`;
+        }
+
+        function zoomIn(mouseX, mouseY) {
             const oldZoom = currentZoom;
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
+            let newZoom = currentZoom * 1.1;
+            if (newZoom > 4) newZoom = 4; // Max zoom
 
-            // Calculate the world coordinates of the center point before zooming
-            const worldXAtCenter = (centerX - panX) / oldZoom;
-            const worldYAtCenter = (centerY - panY) / oldZoom;
-
-            currentZoom *= ZOOM_FACTOR;
-
-            // Recalculate pan to keep the same world point under the center of the canvas
-            panX = centerX - (worldXAtCenter * currentZoom);
-            panY = centerY - (worldYAtCenter * currentZoom);
-
-            // After zoom, re-apply pan boundaries to ensure it doesn't go out of bounds
-            if (uploadedImage) {
-                const imgW = uploadedImage.width * currentZoom;
-                const imgH = uploadedImage.height * currentZoom;
-
-                if (imgW < canvas.width) {
-                    panX = (canvas.width - imgW) / 2;
-                } else {
-                    panX = Math.max(panX, canvas.width - imgW);
-                    panX = Math.min(panX, 0);
-                }
-
-                if (imgH < canvas.height) {
-                    panY = (canvas.height - imgH) / 2;
-                } else {
-                    panY = Math.max(panY, canvas.height - imgH);
-                    panY = Math.min(panY, 0);
-                }
-            }
+            // Adjust pan to keep the point under the mouse stationary
+            panX = (panX - mouseX) * (newZoom / oldZoom) + mouseX;
+            panY = (panY - mouseY) * (newZoom / oldZoom) + mouseY;
+            
+            currentZoom = newZoom;
+            updateZoomLabel();
             drawCanvas();
+        }
+
+        function zoomOut(mouseX, mouseY) {
+            const oldZoom = currentZoom;
+            let newZoom = currentZoom / 1.1;
+            if (newZoom < 0.1) newZoom = 0.1; // Min zoom
+
+            // Adjust pan to keep the point under the mouse stationary
+            panX = (panX - mouseX) * (newZoom / oldZoom) + mouseX;
+            panY = (panY - mouseY) * (newZoom / oldZoom) + mouseY;
+
+            currentZoom = newZoom;
+            updateZoomLabel();
+            drawCanvas();
+        }
+
+        zoomInBtn.addEventListener('click', () => {
+            zoomIn(canvas.width / 2, canvas.height / 2);
         });
 
         zoomOutBtn.addEventListener('click', () => {
-            const oldZoom = currentZoom;
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-
-            // Calculate the world coordinates of the center point before zooming
-            const worldXAtCenter = (centerX - panX) / oldZoom;
-            const worldYAtCenter = (centerY - panY) / oldZoom;
-
-            currentZoom /= ZOOM_FACTOR;
-
-            // Recalculate pan to keep the same world point under the center of the canvas
-            panX = centerX - (worldXAtCenter * currentZoom);
-            panY = centerY - (worldYAtCenter * currentZoom);
-
-            // After zoom, re-apply pan boundaries to ensure it doesn't go out of bounds
-            if (uploadedImage) {
-                const imgW = uploadedImage.width * currentZoom;
-                const imgH = uploadedImage.height * currentZoom;
-
-                if (imgW < canvas.width) {
-                    panX = (canvas.width - imgW) / 2;
-                } else {
-                    panX = Math.max(panX, canvas.width - imgW);
-                    panX = Math.min(panX, 0);
-                }
-
-                if (imgH < canvas.height) {
-                    panY = (canvas.height - imgH) / 2;
-                } else {
-                    panY = Math.max(panY, canvas.height - imgH);
-                    panY = Math.min(panY, 0);
-                }
-            }
-            drawCanvas();
+            zoomOut(canvas.width / 2, canvas.height / 2);
         });
 
-        zoomResetBtn.addEventListener('click', () => {
+        resetZoomBtn.addEventListener('click', () => {
             currentZoom = 1;
-            // When resetting zoom, also reset pan to center the image if available
-            if (uploadedImage) {
-                panX = (canvas.width - uploadedImage.width) / 2;
-                panY = (canvas.height - uploadedImage.height) / 2;
-            } else {
-                panX = 0;
-                panY = 0;
-            }
+            panX = 0;
+            panY = 0;
+            updateZoomLabel();
             drawCanvas();
         });
 
@@ -2787,5 +2964,13 @@
         });
 
     </script>
+
+    <!-- Prevents Flash of Unstyled Content (FOUC) by waiting for all resources to load -->
+    <script>
+        window.addEventListener('load', () => {
+            document.body.style.opacity = '1';
+        });
+    </script>
+
 </body>
 </html>
