@@ -420,6 +420,12 @@
                 </div>
             </form>
             <div class="flex justify-end gap-2 mt-4">
+                <button id="copyBubbleBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                    Copy Bubble
+                </button>
+                <button id="pasteBubbleBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                    Paste Bubble
+                </button>
                 <button id="deleteBubbleBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
                     Delete Bubble
                 </button>
@@ -506,6 +512,12 @@
                 </div>
             </form>
             <div class="flex justify-end gap-2 mt-4">
+                <button id="copyArrowBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                    Copy Arrow
+                </button>
+                <button id="pasteArrowBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                    Paste Arrow
+                </button>
                 <button id="deleteArrowBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
                     Delete Arrow
                 </button>
@@ -1339,24 +1351,35 @@
             }
 
             updateFromEditor(properties) {
+                // Set text properties
                 this.text = properties.text;
-                this.fontSize = parseFloat(properties.fontSize);
-                this.fontFamily = properties.fontFamily;
-                this.textColor = properties.textColor;
-                this.fillColor = properties.fillColor;
-                this.fillTransparency = parseFloat(properties.fillTransparency);
-                this.borderColor = properties.borderColor;
-                this.borderTransparency = parseFloat(properties.borderTransparency);
-                this.borderWidth = parseFloat(properties.borderWidth);
-                this.tailBaseWidth = parseFloat(properties.tailBaseWidth);
-                this.paddingX = parseFloat(properties.paddingX);
-                this.paddingY = parseFloat(properties.paddingY);
-                this.cornerRadius = parseFloat(properties.cornerRadius);
-                this.rotation = parseFloat(properties.rotation);
-                this.flipText = properties.flipText;
-                this.tailBaseSide = properties.tailBaseSide;
-                this.tailBaseAlignment = properties.tailBaseAlignment;
-                this.updateTailTipPosition(); // Update tail tip based on new base properties
+                this.fontSize = properties.fontSize !== undefined ? parseFloat(properties.fontSize) : this.fontSize;
+                this.fontFamily = properties.fontFamily || this.fontFamily;
+                this.textColor = properties.textColor || this.textColor;
+                
+                // Set fill properties
+                this.fillColor = properties.fillColor || this.fillColor;
+                this.fillTransparency = properties.fillTransparency !== undefined ? parseFloat(properties.fillTransparency) : this.fillTransparency;
+                
+                // Set border properties
+                this.borderColor = properties.borderColor || this.borderColor;
+                this.borderTransparency = properties.borderTransparency !== undefined ? parseFloat(properties.borderTransparency) : this.borderTransparency;
+                this.borderWidth = properties.borderWidth !== undefined ? parseFloat(properties.borderWidth) : this.borderWidth;
+                
+                // Set tail properties
+                this.tailBaseSide = properties.tailBaseSide || this.tailBaseSide;
+                this.tailBaseAlignment = properties.tailBaseAlignment || this.tailBaseAlignment;
+                
+                // Set padding and radius
+                this.paddingX = properties.paddingX !== undefined ? parseFloat(properties.paddingX) : this.paddingX;
+                this.paddingY = properties.paddingY !== undefined ? parseFloat(properties.paddingY) : this.paddingY;
+                this.cornerRadius = properties.cornerRadius !== undefined ? parseFloat(properties.cornerRadius) : this.cornerRadius;
+                
+                // Set flip text
+                this.flipText = properties.flipText !== undefined ? properties.flipText : this.flipText;
+                
+                // Update tail position based on new properties
+                this.updateTailTipPosition();
             }
 
             /**
@@ -2575,7 +2598,242 @@
             reader.readAsText(file);
         });
 
+        // --- Copy/Paste State ---
+        let copiedBubble = null;
+        let copiedArrow = null;
+
         // --- Button Event Listeners ---
+
+        // Copy bubble button
+        copyBubbleBtn.addEventListener('click', () => {
+            if (!selectedShape || !(selectedShape instanceof SpeechBubble)) {
+                alert('Please select a speech bubble to copy!');
+                return;
+            }
+            
+            // Store all bubble properties for paste
+            copiedBubble = {
+                x: selectedShape.x,
+                y: selectedShape.y,
+                width: selectedShape.width,
+                height: selectedShape.height,
+                text: selectedShape.text,
+                fontSize: selectedShape.fontSize,
+                fontFamily: selectedShape.fontFamily,
+                textColor: selectedShape.textColor,
+                fillColor: selectedShape.fillColor,
+                fillTransparency: selectedShape.fillTransparency,
+                borderColor: selectedShape.borderColor,
+                borderTransparency: selectedShape.borderTransparency,
+                borderWidth: selectedShape.borderWidth,
+                tailBaseSide: selectedShape.tailBaseSide,
+                tailBaseAlignment: selectedShape.tailBaseAlignment,
+                paddingX: selectedShape.paddingX,
+                paddingY: selectedShape.paddingY,
+                cornerRadius: selectedShape.cornerRadius,
+                flipText: selectedShape.flipText,
+                tailBaseWidth: selectedShape.tailBaseWidth,
+                tailX: selectedShape.tailX,
+                tailY: selectedShape.tailY,
+                tailTipX: selectedShape.tailTipX,
+                tailTipY: selectedShape.tailTipY
+            };
+            
+            // Visual feedback
+            copyBubbleBtn.style.backgroundColor = '#34d399'; // Change to success green
+            setTimeout(() => {
+                copyBubbleBtn.style.backgroundColor = ''; // Reset color
+            }, 1000);
+            
+            console.log('Copied bubble properties:', copiedBubble);
+        });
+
+        // Copy arrow button
+        const copyArrowBtn = document.getElementById('copyArrowBtn');
+        copyArrowBtn.addEventListener('click', () => {
+            if (!selectedShape || !(selectedShape instanceof Arrow)) {
+                alert('Please select an arrow to copy!');
+                return;
+            }
+            
+            // Store all arrow properties for paste
+            copiedArrow = {
+                x1: selectedShape.x1,
+                y1: selectedShape.y1,
+                x2: selectedShape.x2,
+                y2: selectedShape.y2,
+                text: selectedShape.text,
+                fontSize: selectedShape.fontSize,
+                fontFamily: selectedShape.fontFamily,
+                textColor: selectedShape.textColor,
+                fillColor: selectedShape.fillColor,
+                fillTransparency: selectedShape.fillTransparency,
+                borderColor: selectedShape.borderColor,
+                borderTransparency: selectedShape.borderTransparency,
+                borderWidth: selectedShape.borderWidth,
+                lineWidth: selectedShape.lineWidth,
+                headSize: selectedShape.headSize,
+                paddingX: selectedShape.paddingX,
+                paddingY: selectedShape.paddingY,
+                flipText: selectedShape.flipText,
+                rotation: selectedShape.rotation
+            };
+            
+            // Visual feedback
+            copyArrowBtn.style.backgroundColor = '#34d399'; // Change to success green
+            setTimeout(() => {
+                copyArrowBtn.style.backgroundColor = ''; // Reset color
+            }, 1000);
+            
+            console.log('Copied arrow properties:', copiedArrow);
+        });
+
+        // Paste bubble button
+        pasteBubbleBtn.addEventListener('click', () => {
+            if (!copiedBubble) {
+                alert('No bubble properties copied yet! Please copy a bubble first.');
+                return;
+            }
+            
+            // Get current mouse position or use center
+            const mousePos = getMousePos({ clientX: canvas.width / 2, clientY: canvas.height / 2 });
+            
+            // Create new bubble with original dimensions
+            const newBubble = new SpeechBubble(mousePos.x, mousePos.y, 
+                copiedBubble.width || 100, // Use original width with fallback
+                copiedBubble.height || 50, // Use original height with fallback
+                copiedBubble.text, copiedBubble.fontSize, copiedBubble.fontFamily, copiedBubble.textColor
+            );
+            
+            // Copy all properties including dimensions and tail properties
+            const propertiesToCopy = {
+                text: copiedBubble.text || 'Hello!',
+                fontSize: copiedBubble.fontSize || 24,
+                fontFamily: copiedBubble.fontFamily || 'Inter',
+                textColor: copiedBubble.textColor || '#000000',
+                fillColor: copiedBubble.fillColor || '#ffffff',
+                fillTransparency: copiedBubble.fillTransparency !== undefined ? parseFloat(copiedBubble.fillTransparency) : 1,
+                borderColor: copiedBubble.borderColor || '#000000',
+                borderTransparency: copiedBubble.borderTransparency !== undefined ? parseFloat(copiedBubble.borderTransparency) : 1,
+                borderWidth: copiedBubble.borderWidth !== undefined ? parseFloat(copiedBubble.borderWidth) : 2,
+                width: copiedBubble.width || 100, // Use copied width with fallback
+                height: copiedBubble.height || 50, // Use copied height with fallback
+                tailBaseSide: copiedBubble.tailBaseSide || 'bottom',
+                tailBaseAlignment: copiedBubble.tailBaseAlignment || 'center',
+                paddingX: copiedBubble.paddingX !== undefined ? parseFloat(copiedBubble.paddingX) : 15,
+                paddingY: copiedBubble.paddingY !== undefined ? parseFloat(copiedBubble.paddingY) : 10,
+                cornerRadius: copiedBubble.cornerRadius !== undefined ? parseFloat(copiedBubble.cornerRadius) : 15,
+                flipText: copiedBubble.flipText || false,
+                // Copy tail properties
+                tailBaseWidth: copiedBubble.tailBaseWidth,
+                tailX: copiedBubble.tailX,
+                tailY: copiedBubble.tailY,
+                tailTipX: copiedBubble.tailTipX,
+                tailTipY: copiedBubble.tailTipY
+            };
+            
+            // Update the bubble with copied properties
+            newBubble.updateFromEditor(propertiesToCopy);
+            
+            // Update tail position based on new properties
+            newBubble.updateTailTipPosition();
+            
+            // Add to shapes array
+            shapes.push(newBubble);
+            
+            // Select and open editor
+            selectedShape = newBubble;
+            openBubbleEditor(newBubble);
+            
+            // Redraw canvas
+            drawCanvas();
+            
+            // Visual feedback
+            pasteBubbleBtn.style.backgroundColor = '#3b82f6'; // Change to success blue
+            setTimeout(() => {
+                pasteBubbleBtn.style.backgroundColor = ''; // Reset color
+            }, 1000);
+            
+            console.log('Pasted bubble with properties:', newBubble);
+        });
+
+        // Paste arrow button
+        const pasteArrowBtn = document.getElementById('pasteArrowBtn');
+        pasteArrowBtn.addEventListener('click', () => {
+            if (!copiedArrow) {
+                alert('No arrow properties copied yet! Please copy an arrow first.');
+                return;
+            }
+            
+            // Get current mouse position or use center
+            const mousePos = getMousePos({ clientX: canvas.width / 2, clientY: canvas.height / 2 });
+            
+            // Calculate new arrow endpoints based on original direction
+            const dx = copiedArrow.x2 - copiedArrow.x1;
+            const dy = copiedArrow.y2 - copiedArrow.y1;
+            const newArrow = new Arrow(
+                mousePos.x,
+                mousePos.y,
+                mousePos.x + dx,
+                mousePos.y + dy,
+                copiedArrow.text || '',
+                copiedArrow.fontSize || 16,
+                copiedArrow.fontFamily || 'Inter',
+                copiedArrow.textColor || '#000000'
+            );
+            
+            // Copy all arrow properties, ensuring colors are properly copied
+            const propertiesToCopy = {
+                text: copiedArrow.text || '',
+                fontSize: copiedArrow.fontSize || 16,
+                fontFamily: copiedArrow.fontFamily || 'Inter',
+                textColor: copiedArrow.textColor || '#000000',
+                fillColor: copiedArrow.fillColor || '#ffffff',
+                fillTransparency: copiedArrow.fillTransparency !== undefined ? parseFloat(copiedArrow.fillTransparency) : 1,
+                borderColor: copiedArrow.borderColor || '#000000',
+                borderTransparency: copiedArrow.borderTransparency !== undefined ? parseFloat(copiedArrow.borderTransparency) : 1,
+                borderWidth: copiedArrow.borderWidth !== undefined ? parseFloat(copiedArrow.borderWidth) : 2,
+                lineWidth: copiedArrow.lineWidth !== undefined ? parseFloat(copiedArrow.lineWidth) : 2,
+                headSize: copiedArrow.headSize !== undefined ? parseFloat(copiedArrow.headSize) : 10,
+                paddingX: copiedArrow.paddingX !== undefined ? parseFloat(copiedArrow.paddingX) : 10,
+                paddingY: copiedArrow.paddingY !== undefined ? parseFloat(copiedArrow.paddingY) : 5,
+                flipText: copiedArrow.flipText || false,
+                rotation: copiedArrow.rotation !== undefined ? parseFloat(copiedArrow.rotation) : 0
+            };
+            
+            // Set colors explicitly before updateFromEditor
+            newArrow.fillColor = propertiesToCopy.fillColor;
+            newArrow.fillTransparency = propertiesToCopy.fillTransparency;
+            newArrow.textColor = propertiesToCopy.textColor; // Ensure text color is copied
+            
+            // Set the text background color explicitly
+            newArrow.textBackgroundColor = propertiesToCopy.fillColor;
+            newArrow.textBackgroundTransparency = propertiesToCopy.fillTransparency;
+            
+            // Update the arrow with copied properties
+            newArrow.updateFromEditor(propertiesToCopy);
+            
+            // Update the arrow with copied properties
+            newArrow.updateFromEditor(propertiesToCopy);
+            
+            // Add to shapes array
+            shapes.push(newArrow);
+            
+            // Select and open editor
+            selectedShape = newArrow;
+            openArrowEditor(newArrow);
+            
+            // Redraw canvas
+            drawCanvas();
+            
+            // Visual feedback
+            pasteArrowBtn.style.backgroundColor = '#3b82f6'; // Change to success blue
+            setTimeout(() => {
+                pasteArrowBtn.style.backgroundColor = ''; // Reset color
+            }, 1000);
+            
+            console.log('Pasted arrow with properties:', newArrow);
+        });
 
         uploadImageBtn.addEventListener('click', () => {
             imageInput.click(); // Trigger hidden file input click
@@ -2634,14 +2892,7 @@
             }
         });
 
-        createBubbleBtn.addEventListener('click', () => {
-            showPointer('bubblePointer', 'Drag To Place Bubble');
-        });
-
-        createArrowBtn.addEventListener('click', () => {
-            showPointer('arrowPointer', 'Drag To Make Arrow');
-        });
-
+        // Create Bubble button handler
         createBubbleBtn.addEventListener('click', () => {
             console.log('1. Create Bubble button clicked.');
             drawingMode = 'bubble';
@@ -2652,29 +2903,17 @@
             resizeHandle = null;
             rotationHandle = null;
             isTailMoving = false;
+            canvas.style.cursor = 'crosshair';
+            console.log('   drawingMode set to:', drawingMode);
             drawCanvas();
         });
 
-        createBubbleBtn.addEventListener('click', () => {
-            showPointer('bubblePointer', 'Drag To Place Bubble');
-        });
-
-        createArrowBtn.addEventListener('click', () => {
-            showPointer('arrowPointer', 'Drag To Make Arrow');
-        });
-
-        createBubbleBtn.addEventListener('click', () => {
-            console.log('1. Create Bubble button clicked.');
-            drawingMode = 'bubble';
-            selectedShape = null; // Deselect any existing shape
-            canvas.style.cursor = 'crosshair';
-            console.log('   drawingMode set to:', drawingMode);
-        });
-
+        // Create Arrow button handler
         createArrowBtn.addEventListener('click', () => {
             drawingMode = 'arrow';
             selectedShape = null; // Deselect any existing shape
             canvas.style.cursor = 'crosshair';
+            drawCanvas();
         });
 
         saveImageBtn.addEventListener('click', function() {
@@ -2817,6 +3056,7 @@
         bubbleFillTransparency.addEventListener('input', (e) => {
             bubbleFillTransparencyValue.textContent = parseFloat(e.target.value).toFixed(2);
         });
+
         bubbleBorderTransparency.addEventListener('input', (e) => {
             bubbleBorderTransparencyValue.textContent = parseFloat(e.target.value).toFixed(2);
         });
@@ -2962,6 +3202,237 @@
                 }
             });
         });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey) {
+                isCtrlPressed = true;
+                updateCursor(e.clientX, e.clientY);
+            }
+
+            // Handle delete key
+            if (e.key === 'Delete' && selectedShape) {
+                const confirmDelete = confirm('Are you sure you want to delete this shape?');
+                if (confirmDelete) {
+                    shapes = shapes.filter(shape => shape !== selectedShape);
+                    selectedShape = null;
+                    drawCanvas();
+                }
+            }
+
+            // Handle Ctrl+C (Copy)
+            if (e.ctrlKey && e.key === 'c') {
+                e.preventDefault(); // Prevent default browser copy behavior
+                
+                if (!selectedShape) {
+                    alert('Please select a shape to copy!');
+                    return;
+                }
+                
+                // Reset any existing copied shape
+                if (selectedShape instanceof SpeechBubble) {
+                    copiedBubble = {
+                        text: selectedShape.text,
+                        fontSize: selectedShape.fontSize,
+                        fontFamily: selectedShape.fontFamily,
+                        textColor: selectedShape.textColor,
+                        fillColor: selectedShape.fillColor,
+                        fillTransparency: selectedShape.fillTransparency,
+                        borderColor: selectedShape.borderColor,
+                        borderTransparency: selectedShape.borderTransparency,
+                        borderWidth: selectedShape.borderWidth,
+                        width: selectedShape.width,
+                        height: selectedShape.height,
+                        tailBaseSide: selectedShape.tailBaseSide,
+                        tailBaseAlignment: selectedShape.tailBaseAlignment,
+                        paddingX: selectedShape.paddingX,
+                        paddingY: selectedShape.paddingY,
+                        cornerRadius: selectedShape.cornerRadius,
+                        flipText: selectedShape.flipText,
+                        tailBaseWidth: selectedShape.tailBaseWidth,
+                        tailX: selectedShape.tailX,
+                        tailY: selectedShape.tailY,
+                        tailTipX: selectedShape.tailTipX,
+                        tailTipY: selectedShape.tailTipY
+                    };
+                    copiedArrow = null; // Clear any existing arrow copy
+                    
+                    // Visual feedback
+                    copyBubbleBtn.style.backgroundColor = '#34d399'; // Change to success green
+                    setTimeout(() => {
+                        copyBubbleBtn.style.backgroundColor = ''; // Reset color
+                    }, 1000);
+                    
+                    console.log('Copied bubble properties:', copiedBubble);
+                } else if (selectedShape instanceof Arrow) {
+                    copiedArrow = {
+                        x1: selectedShape.x1,
+                        y1: selectedShape.y1,
+                        x2: selectedShape.x2,
+                        y2: selectedShape.y2,
+                        text: selectedShape.text,
+                        fontSize: selectedShape.fontSize,
+                        fontFamily: selectedShape.fontFamily,
+                        textColor: selectedShape.textColor,
+                        fillColor: selectedShape.fillColor,
+                        fillTransparency: selectedShape.fillTransparency,
+                        borderColor: selectedShape.borderColor,
+                        borderTransparency: selectedShape.borderTransparency,
+                        borderWidth: selectedShape.borderWidth,
+                        lineWidth: selectedShape.lineWidth,
+                        headSize: selectedShape.headSize,
+                        paddingX: selectedShape.paddingX,
+                        paddingY: selectedShape.paddingY,
+                        flipText: selectedShape.flipText,
+                        rotation: selectedShape.rotation,
+                        textBackgroundColor: selectedShape.textBackgroundColor,
+                        textBackgroundTransparency: selectedShape.textBackgroundTransparency
+                    };
+                    copiedBubble = null; // Clear any existing bubble copy
+                    
+                    // Visual feedback
+                    copyArrowBtn.style.backgroundColor = '#34d399'; // Change to success green
+                    setTimeout(() => {
+                        copyArrowBtn.style.backgroundColor = ''; // Reset color
+                    }, 1000);
+                    
+                    console.log('Copied arrow properties:', copiedArrow);
+                }
+            }
+
+            // Handle Ctrl+V (Paste)
+            if (e.ctrlKey && e.key === 'v') {
+                e.preventDefault(); // Prevent default browser paste behavior
+                
+                if (copiedBubble) {
+                    // Paste bubble
+                    const mousePos = getMousePos({ clientX: canvas.width / 2, clientY: canvas.height / 2 });
+                    const newBubble = new SpeechBubble(mousePos.x, mousePos.y, 
+                        copiedBubble.width || 100, // Use original width with fallback
+                        copiedBubble.height || 50, // Use original height with fallback
+                        copiedBubble.text, copiedBubble.fontSize, copiedBubble.fontFamily, copiedBubble.textColor
+                    );
+                    
+                    // Copy all properties including dimensions and tail properties
+                    const propertiesToCopy = {
+                        text: copiedBubble.text || 'Hello!',
+                        fontSize: copiedBubble.fontSize || 24,
+                        fontFamily: copiedBubble.fontFamily || 'Inter',
+                        textColor: copiedBubble.textColor || '#000000',
+                        fillColor: copiedBubble.fillColor || '#ffffff',
+                        fillTransparency: copiedBubble.fillTransparency !== undefined ? parseFloat(copiedBubble.fillTransparency) : 1,
+                        borderColor: copiedBubble.borderColor || '#000000',
+                        borderTransparency: copiedBubble.borderTransparency !== undefined ? parseFloat(copiedBubble.borderTransparency) : 1,
+                        borderWidth: copiedBubble.borderWidth !== undefined ? parseFloat(copiedBubble.borderWidth) : 2,
+                        width: copiedBubble.width || 100, // Use copied width with fallback
+                        height: copiedBubble.height || 50, // Use copied height with fallback
+                        tailBaseSide: copiedBubble.tailBaseSide || 'bottom',
+                        tailBaseAlignment: copiedBubble.tailBaseAlignment || 'center',
+                        paddingX: copiedBubble.paddingX !== undefined ? parseFloat(copiedBubble.paddingX) : 15,
+                        paddingY: copiedBubble.paddingY !== undefined ? parseFloat(copiedBubble.paddingY) : 10,
+                        cornerRadius: copiedBubble.cornerRadius !== undefined ? parseFloat(copiedBubble.cornerRadius) : 15,
+                        flipText: copiedBubble.flipText || false,
+                        tailBaseWidth: copiedBubble.tailBaseWidth,
+                        tailX: copiedBubble.tailX,
+                        tailY: copiedBubble.tailY,
+                        tailTipX: copiedBubble.tailTipX,
+                        tailTipY: copiedBubble.tailTipY
+                    };
+                    
+                    // Update the bubble with copied properties
+                    newBubble.updateFromEditor(propertiesToCopy);
+                    
+                    // Add to shapes array
+                    shapes.push(newBubble);
+                    
+                    // Select the new bubble
+                    selectedShape = newBubble;
+                    
+                    // Redraw canvas
+                    drawCanvas();
+                    
+                    // Visual feedback
+                    pasteBubbleBtn.style.backgroundColor = '#3b82f6'; // Change to success blue
+                    setTimeout(() => {
+                        pasteBubbleBtn.style.backgroundColor = ''; // Reset color
+                    }, 1000);
+                    
+                    console.log('Pasted bubble with properties:', newBubble);
+                } else if (copiedArrow) {
+                    // Paste arrow
+                    const mousePos = getMousePos({ clientX: canvas.width / 2, clientY: canvas.height / 2 });
+                    
+                    // Calculate new arrow endpoints based on original direction
+                    const dx = copiedArrow.x2 - copiedArrow.x1;
+                    const dy = copiedArrow.y2 - copiedArrow.y1;
+                    const newArrow = new Arrow(
+                        mousePos.x,
+                        mousePos.y,
+                        mousePos.x + dx,
+                        mousePos.y + dy,
+                        copiedArrow.text || '',
+                        copiedArrow.fontSize || 16,
+                        copiedArrow.fontFamily || 'Inter',
+                        copiedArrow.textColor || '#000000'
+                    );
+                    
+                    // Copy all arrow properties
+                    const propertiesToCopy = {
+                        text: copiedArrow.text || '',
+                        fontSize: copiedArrow.fontSize || 16,
+                        fontFamily: copiedArrow.fontFamily || 'Inter',
+                        textColor: copiedArrow.textColor || '#000000',
+                        fillColor: copiedArrow.fillColor || '#ffffff',
+                        fillTransparency: copiedArrow.fillTransparency !== undefined ? parseFloat(copiedArrow.fillTransparency) : 1,
+                        borderColor: copiedArrow.borderColor || '#000000',
+                        borderTransparency: copiedArrow.borderTransparency !== undefined ? parseFloat(copiedArrow.borderTransparency) : 1,
+                        borderWidth: copiedArrow.borderWidth !== undefined ? parseFloat(copiedArrow.borderWidth) : 2,
+                        lineWidth: copiedArrow.lineWidth !== undefined ? parseFloat(copiedArrow.lineWidth) : 2,
+                        headSize: copiedArrow.headSize !== undefined ? parseFloat(copiedArrow.headSize) : 10,
+                        paddingX: copiedArrow.paddingX !== undefined ? parseFloat(copiedArrow.paddingX) : 10,
+                        paddingY: copiedArrow.paddingY !== undefined ? parseFloat(copiedArrow.paddingY) : 5,
+                        flipText: copiedArrow.flipText || false,
+                        rotation: copiedArrow.rotation !== undefined ? parseFloat(copiedArrow.rotation) : 0,
+                        textBackgroundColor: copiedArrow.textBackgroundColor || '#ffffff',
+                        textBackgroundTransparency: copiedArrow.textBackgroundTransparency !== undefined ? parseFloat(copiedArrow.textBackgroundTransparency) : 1
+                    };
+                    
+                    // Set colors explicitly before updateFromEditor
+                    newArrow.fillColor = propertiesToCopy.fillColor;
+                    newArrow.fillTransparency = propertiesToCopy.fillTransparency;
+                    newArrow.textColor = propertiesToCopy.textColor; // Ensure text color is copied
+                    
+                    // Set the text background color explicitly
+                    newArrow.textBackgroundColor = propertiesToCopy.textBackgroundColor;
+                    newArrow.textBackgroundTransparency = propertiesToCopy.textBackgroundTransparency;
+                    
+                    // Update the arrow with copied properties
+                    newArrow.updateFromEditor(propertiesToCopy);
+                    
+                    // Add to shapes array
+                    shapes.push(newArrow);
+                    
+                    // Select the new arrow
+                    selectedShape = newArrow;
+                    
+                    // Redraw canvas
+                    drawCanvas();
+                    
+                    // Visual feedback
+                    pasteArrowBtn.style.backgroundColor = '#3b82f6'; // Change to success blue
+                    setTimeout(() => {
+                        pasteArrowBtn.style.backgroundColor = ''; // Reset color
+                    }, 1000);
+                    
+                    console.log('Pasted arrow with properties:', newArrow);
+                } else {
+                    alert('No shape properties copied yet! Please copy a shape first.');
+                }
+            }
+
+        });
+        
+        arrowEditorModal.classList.add('hidden');
+
 
     </script>
 
