@@ -100,14 +100,14 @@
             overflow: hidden; /* Prevent body scroll */
         }
         .sidebar {
-            width: 20rem; /* w-80 */
+            width: 16rem; /* Reduced from 20rem */
             background-color: white;
-            padding: 0.75rem; /* p-3 */
+            padding: 0.5rem; /* Reduced from 0.75rem */
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem; /* gap-2 */
+            gap: 0.25rem; /* Reduced from 0.5rem */
         }
         .canvas-container {
             flex-grow: 1; /* Canvas takes remaining space */
@@ -147,21 +147,21 @@
             overflow-y: auto; /* Enable scroll on overflow */
         }
         .form-group {
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
         }
         .form-group label {
             font-weight: 600;
-            font-size: 0.875rem; /* sm text */
+            font-size: 0.75rem; /* Reduced from 0.875rem */
             color: #374151; /* Gray-700 */
         }
         .form-group input[type="text"],
         .form-group input[type="number"],
         .form-group input[type="color"],
         .form-group select {
-            padding: 0.5rem 0.75rem;
+            padding: 0.375rem 0.5rem; /* Reduced from 0.5rem 0.75rem */
             border: 1px solid #d1d5db; /* Gray-300 */
             border-radius: 0.375rem; /* Rounded-md */
-            font-size: 1rem;
+            font-size: 0.875rem; /* Reduced from 1rem */
             line-height: 1.5;
             transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         }
@@ -298,7 +298,7 @@
             <div class="text-center text-xl text-blue-600 mt-4 font-bold">Double Click New Objects To Edit Properties</div>
 
             <div class="mt-4">
-                <h2 class="text-lg font-semibold mb-2 text-gray-700">Canvas Controls</h2>
+                <h2 class="text-sm font-semibold mb-1 text-gray-700">Canvas Controls</h2>
                 <div class="flex flex-col gap-2">
                     <button id="zoomInBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
                         <i class="fas fa-search-plus mr-2"></i>Zoom +
@@ -321,42 +321,34 @@
     </div>
 
     <!-- Speech Bubble Editor Modal -->
-    <div id="bubbleEditorModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full z-50 flex items-center justify-center p-4">
+    <div id="bubbleEditorModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full z-50 flex items-center justify-center p-2">
         <div class="modal-content">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">Edit Speech Bubble</h2>
-            <form class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+            <h2 class="text-lg font-bold mb-1 text-gray-800">Edit Speech Bubble</h2>
+            <form class="mt-1 grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-1">
                 <div class="form-group">
                     <label for="bubbleText">Text String:</label>
                     <input type="text" id="bubbleText" class="w-full">
                 </div>
                 <div class="form-group">
                     <label for="bubbleFontSize">Font Size:</label>
-                    <input type="number" id="bubbleFontSize" min="8" max="100" class="w-full">
+                    <input type="number" id="bubbleFontSize" min="8" max="72" class="w-full">
                 </div>
                 <div class="form-group">
-                    <label for="bubbleFontFamily">Font Family:</label>
-                    <select id="bubbleFontFamily" class="w-full">
+                    <label for="bubbleFont">Font Family:</label>
+                    <select id="bubbleFont" class="w-full">
                         <option value="Arial">Arial</option>
-                        <option value="Verdana">Verdana</option>
                         <option value="Helvetica">Helvetica</option>
                         <option value="Times New Roman">Times New Roman</option>
                         <option value="Courier New">Courier New</option>
                         <option value="Georgia">Georgia</option>
-                        <option value="Palatino">Palatino</option>
-                        <option value="Garamond">Garamond</option>
-                        <option value="Trebuchet MS">Trebuchet MS</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Comic Sans MS">Comic Sans MS</option>
                         <option value="Impact">Impact</option>
-                        <option value="Inter">Inter</option>
-                        <!-- Add more font options as needed -->
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="bubbleRotation">Rotation (Degrees):</label>
-                    <input type="number" id="bubbleRotation" min="0" max="360" step="1" class="w-full">
-                </div>
-                <div class="form-group">
-                    <label for="bubbleFillColor">Fill Color:</label>
-                    <input type="color" id="bubbleFillColor" class="w-full h-10">
+                    <label for="bubbleFill">Fill Color:</label>
+                    <input type="color" id="bubbleFill" class="w-full h-8">
                 </div>
                 <div class="form-group">
                     <label for="bubbleFillTransparency">Fill Transparency:</label>
@@ -365,7 +357,7 @@
                 </div>
                 <div class="form-group">
                     <label for="bubbleBorderColor">Border Color:</label>
-                    <input type="color" id="bubbleBorderColor" class="w-full h-10">
+                    <input type="color" id="bubbleBorderColor" class="w-full h-8">
                 </div>
                 <div class="form-group">
                     <label for="bubbleBorderTransparency">Border Transparency:</label>
@@ -373,14 +365,13 @@
                     <span id="bubbleBorderTransparencyValue" class="text-xs text-gray-500 text-right"></span>
                 </div>
                 <div class="form-group">
+                    <label for="bubbleTextColor">Text Color:</label>
+                    <input type="color" id="bubbleTextColor" class="w-full h-8">
+                </div>
+                <div class="form-group">
                     <label for="bubbleBorderWidth">Border Width:</label>
                     <input type="number" id="bubbleBorderWidth" min="0" max="20" class="w-full">
                 </div>
-                <div class="form-group">
-                    <label for="bubbleTextColor">Text Color:</label>
-                    <input type="color" id="bubbleTextColor" class="w-full h-10">
-                </div>
-                <!-- New Tail Position Controls -->
                 <div class="form-group">
                     <label for="bubbleTailSide">Tail Side:</label>
                     <select id="bubbleTailSide" class="w-full">
@@ -399,10 +390,6 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="bubbleTailBaseWidth">Tail Base Width:</label>
-                    <input type="number" id="bubbleTailBaseWidth" min="0" max="100" class="w-full">
-                </div>
-                <div class="form-group">
                     <label for="bubblePaddingX">Padding X:</label>
                     <input type="number" id="bubblePaddingX" min="0" max="100" class="w-full">
                 </div>
@@ -411,22 +398,26 @@
                     <input type="number" id="bubblePaddingY" min="0" max="100" class="w-full">
                 </div>
                 <div class="form-group">
-                    <label for="bubbleCornerRadius">Corner Radius:</label>
-                    <input type="number" id="bubbleCornerRadius" min="0" max="50" class="w-full">
+                    <label for="bubbleRotation">Rotation:</label>
+                    <input type="number" id="bubbleRotation" min="-180" max="180" class="w-full">
                 </div>
-                <div class="form-group flex items-center justify-start mt-2">
-                    <input type="checkbox" id="bubbleFlipText" class="mr-2 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                    <label for="bubbleFlipText" class="mb-0">Flip Text 180 degrees</label>
+                <div class="form-group">
+                    <label for="bubbleTailLength">Tail Length:</label>
+                    <input type="number" id="bubbleTailLength" min="0" max="100" class="w-full">
+                </div>
+                <div class="form-group">
+                    <label for="bubbleTailWidth">Tail Width:</label>
+                    <input type="number" id="bubbleTailWidth" min="0" max="50" class="w-full">
                 </div>
             </form>
-            <div class="flex justify-end gap-2 mt-4">
-                <button id="copyBubbleBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+            <div class="flex justify-end gap-1 mt-2">
+                <button id="copyBubbleBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded-lg shadow-md transition duration-200 ease-in-out">
                     Copy Bubble
                 </button>
-                <button id="pasteBubbleBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                <button id="pasteBubbleBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-2 rounded-lg shadow-md transition duration-200 ease-in-out">
                     Paste Bubble
                 </button>
-                <button id="deleteBubbleBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                <button id="deleteBubbleBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded-lg shadow-md transition duration-200 ease-in-out">
                     Delete Bubble
                 </button>
                 <button id="cancelBubbleBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
@@ -442,7 +433,7 @@
     <!-- Arrow Editor Modal -->
     <div id="arrowEditorModal" class="modal-overlay hidden">
         <div class="modal-content">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">Edit Stretchable Arrow</h2>
+            <h2 class="text-lg font-bold mb-2 text-gray-800">Edit Stretchable Arrow</h2>
             <form id="arrowForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                 <div class="form-group">
                     <label for="arrowText">Text String:</label>
@@ -512,10 +503,10 @@
                 </div>
             </form>
             <div class="flex justify-end gap-2 mt-4">
-                <button id="copyArrowBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                <button id="copyArrowBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-1.5 px-3 rounded-lg shadow-md transition duration-200 ease-in-out">
                     Copy Arrow
                 </button>
-                <button id="pasteArrowBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                <button id="pasteArrowBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1.5 px-3 rounded-lg shadow-md transition duration-200 ease-in-out">
                     Paste Arrow
                 </button>
                 <button id="deleteArrowBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
@@ -3031,11 +3022,31 @@
         // --- Speech Bubble Editor Modal Logic ---
 
         function openBubbleEditor(bubble) {
+            // Get all the form elements
+            const bubbleText = document.getElementById('bubbleText');
+            const bubbleFontSize = document.getElementById('bubbleFontSize');
+            const bubbleFont = document.getElementById('bubbleFont');
+            const bubbleFill = document.getElementById('bubbleFill');
+            const bubbleFillTransparency = document.getElementById('bubbleFillTransparency');
+            const bubbleFillTransparencyValue = document.getElementById('bubbleFillTransparencyValue');
+            const bubbleBorderColor = document.getElementById('bubbleBorderColor');
+            const bubbleBorderTransparency = document.getElementById('bubbleBorderTransparency');
+            const bubbleBorderTransparencyValue = document.getElementById('bubbleBorderTransparencyValue');
+            const bubbleBorderWidth = document.getElementById('bubbleBorderWidth');
+            const bubbleTextColor = document.getElementById('bubbleTextColor');
+            const bubbleTailSide = document.getElementById('bubbleTailSide');
+            const bubbleTailAlignment = document.getElementById('bubbleTailAlignment');
+            const bubblePaddingX = document.getElementById('bubblePaddingX');
+            const bubblePaddingY = document.getElementById('bubblePaddingY');
+            const bubbleRotation = document.getElementById('bubbleRotation');
+            const bubbleTailLength = document.getElementById('bubbleTailLength');
+            const bubbleTailWidth = document.getElementById('bubbleTailWidth');
+
+            // Set all values
             bubbleText.value = bubble.text;
             bubbleFontSize.value = bubble.fontSize;
-            bubbleFontFamily.value = bubble.fontFamily;
-            bubbleRotation.value = bubble.rotation;
-            bubbleFillColor.value = bubble.fillColor;
+            bubbleFont.value = bubble.fontFamily;
+            bubbleFill.value = bubble.fillColor;
             bubbleFillTransparency.value = bubble.fillTransparency;
             bubbleFillTransparencyValue.textContent = bubble.fillTransparency.toFixed(2);
             bubbleBorderColor.value = bubble.borderColor;
@@ -3043,13 +3054,15 @@
             bubbleBorderTransparencyValue.textContent = bubble.borderTransparency.toFixed(2);
             bubbleBorderWidth.value = bubble.borderWidth;
             bubbleTextColor.value = bubble.textColor;
-            bubbleTailSide.value = bubble.tailBaseSide; // Set new dropdown value
-            bubbleTailAlignment.value = bubble.tailBaseAlignment; // Set new dropdown value
-            bubbleTailBaseWidth.value = bubble.tailBaseWidth;
+            bubbleTailSide.value = bubble.tailSide;
+            bubbleTailAlignment.value = bubble.tailAlignment;
             bubblePaddingX.value = bubble.paddingX;
             bubblePaddingY.value = bubble.paddingY;
-            bubbleCornerRadius.value = bubble.cornerRadius;
-            bubbleFlipText.checked = bubble.flipText;
+            bubbleRotation.value = bubble.rotation;
+            bubbleTailLength.value = bubble.tailLength;
+            bubbleTailWidth.value = bubble.tailWidth;
+
+            // Show the modal
             bubbleEditorModal.classList.remove('hidden');
         }
 
