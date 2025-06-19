@@ -208,365 +208,404 @@
     </style>
 </head>
 <body class="bg-gray-100">
-    <div style="position: fixed; top: 5px; left: 10px; font-size: 11px; font-family: sans-serif; color: #555; z-index: 10000; /*pointer-events: none;*/">
-      <a href="https://github.com/SOSTRAX/bubbleup">© 2025 Michael Dietz · SOSTRAX</a>
-    </div>
+    <div style="position: fixed; top: 5px; left: 10px; font-size: 11px; font-family: sans-serif; color: #98d892; z-index: 10000; /*pointer-events: none;*/">
+        <a href="https://github.com/SOSTRAX/bubbleup">© 2025 Michael Dietz · SOSTRAX</a>
+      </div>
+  
+      <!-- Hidden project/license/contact info -->
+      <div style="display: none;">
+        <section>
+          <h2>About This Project</h2>
+          <p><strong>Project:</strong> BubbleUp Image Editor</p>
+          <p><strong>Author:</strong> Michael Dietz</p>
+          <p>This project is a simple HTML page created to demonstrate the flexibility of the CANVAS.</p>
+          <p><strong>License:</strong> MIT License — free to use with attribution. See https://opensource.org/licenses/MIT</p>
+          <p>If you’re interested in working together or want to know more, feel free to contact me: mike@sostrax.com</p>
+          <p>View this project on GitHub: https://github.com/SOSTRAX/bubbleup</p>
+        </section>
+      </div>
+  
+      <!-- Main Header -->
+      <header class="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white shadow-lg z-10">
+          <h1 class="text-3xl font-bold text-center">BubbleUp</h1>
+      </header>
+        <div class="container">
+            <!-- Left Sidebar -->
+            <div class="sidebar">
+                <!-- File Menu Dropdown -->
+                <div class="relative" id="fileMenuContainer">
+                    <button id="fileMenuBtn" class="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out flex items-center justify-center">
+                        <i class="fas fa-file-alt mr-2"></i>
+                        <span>File</span>
+                        <i class="fas fa-chevron-down ml-auto pl-2"></i>
+                    </button>
+                    <div id="fileMenuDropdown" class="absolute left-0 mt-2 w-full rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-20">
+                        <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="fileMenuBtn">
+                            <a href="#" id="exportToFileBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-file-export mr-2"></i>Export Project (.json)</a>
+                            <a href="#" id="importFromFileBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-file-import mr-2"></i>Import Project (.json)</a>
+                            <div class="border-t border-gray-200 my-1"></div>
+                            <a href="#" id="saveImageBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-save mr-2"></i>Save as Image (.png)</a>
+                            <a href="#" id="saveClipBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-video mr-2"></i>Save as Clip (.webm)</a>
+                        </div>
+                    </div>
+                </div>
 
-    <!-- Hidden project/license/contact info -->
-    <div style="display: none;">
-      <section>
-        <h2>About This Project</h2>
-        <p><strong>Project:</strong> BubbleUp Image Editor</p>
-        <p><strong>Author:</strong> Michael Dietz</p>
-        <p>This project is a simple HTML page created to demonstrate the flexibility of the CANVAS.</p>
-        <p><strong>License:</strong> MIT License — free to use with attribution. See https://opensource.org/licenses/MIT</p>
-        <p>If you’re interested in working together or want to know more, feel free to contact me: mike@sostrax.com</p>
-        <p>View this project on GitHub: https://github.com/SOSTRAX/bubbleup</p>
-      </section>
-    </div>
-
-    <!-- Main Header -->
-    <header class="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white shadow-lg z-10">
-        <h1 class="text-3xl font-bold text-center">BubbleUp</h1>
-    </header>
-    <div class="container">
-        <!-- Left Sidebar -->
-        <div class="sidebar">
-            <!-- File Menu Dropdown -->
-            <div class="relative" id="fileMenuContainer">
-                <button id="fileMenuBtn" class="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out flex items-center justify-center">
-                    <i class="fas fa-file-alt mr-2"></i>
-                    <span>File</span>
-                    <i class="fas fa-chevron-down ml-auto pl-2"></i>
+                <button id="undoBtn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold p-1 rounded-lg shadow-md transition duration-200 ease-in-out">
+                    <i class="fas fa-undo-alt text-sm"></i><span>&nbsp;Undo</span>
                 </button>
-                <div id="fileMenuDropdown" class="absolute left-0 mt-2 w-full rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-20">
-                    <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="fileMenuBtn">
-                        <a href="#" id="exportToFileBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-file-export mr-2"></i>Export Project (.json)</a>
-                        <a href="#" id="importFromFileBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-file-import mr-2"></i>Import Project (.json)</a>
-                        <div class="border-t border-gray-200 my-1"></div>
-                        <a href="#" id="saveImageBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-save mr-2"></i>Save as Image (.png)</a>
-                        <a href="#" id="saveClipBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-video mr-2"></i>Save as Clip (.webm)</a>
+                <button id="redoBtn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold p-1 rounded-lg shadow-md transition duration-200 ease-in-out">
+                    <i class="fas fa-redo-alt text-sm"></i><span>&nbsp;Redo</span>
+                </button>
+
+
+                <input type="file" id="fileInput" class="hidden" accept=".json">
+                <div class="border-t border-gray-300 my-2"></div>
+
+                <!-- Pointer Elements -->
+                <div id="saveCanvasPointer" class="pointer-overlay hidden">
+                    <div class="pointer-pointer"></div>
+                    <div class="pointer-text">Save Canvas</div>
+                </div>
+                <div id="loadCanvasPointer" class="pointer-overlay hidden">
+                    <div class="pointer-pointer"></div>
+                    <div class="pointer-text">Load Canvas</div>
+                </div>
+
+
+                <!-- Feature Buttons -->
+                <button id="uploadImageBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
+                    <i class="fas fa-upload mr-2"></i>Choose Image
+                </button>
+                <input type="file" id="imageInput" accept="image/*" class="hidden">
+                <div id="fileNameDisplay" class="text-center text-sm text-blue-600 mt-2 font-medium bg-white px-3 py-1 rounded-full shadow-sm w-full"></div>
+
+                <button id="createBubbleBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
+                    <i class="fas fa-comment-dots mr-2"></i>Create Speech Bubble
+                </button>
+                <div id="bubblePointer" class="pointer-overlay hidden">
+                    <div class="pointer-pointer"></div>
+                    <div class="pointer-text">Drag To Place Bubble</div>
+                </div>
+
+                <button id="createArrowBtn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
+                    <i class="fas fa-arrow-right mr-2"></i>Create Stretchable Arrow
+                </button>
+                <div id="arrowPointer" class="pointer-overlay hidden">
+                    <div class="pointer-pointer"></div>
+                    <div class="pointer-text">Drag To Make Arrow</div>
+                </div>
+
+
+
+                <button id="clearCanvasBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-3 text-sm rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
+                    <i class="fas fa-trash-alt mr-1.5 text-sm"></i>Clear Canvas
+                </button>
+
+                <button id="howToBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-1.5 px-3 text-sm rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
+                    <i class="fas fa-info-circle mr-1.5 text-sm"></i>How To Use
+                </button>
+                <div class="text-center text-lg text-blue-600 mt-3 font-bold">Double Click New Objects To Edit Properties</div>
+
+                <!-- Quick Action Buttons -->
+                <div class="flex justify-center gap-2 mb-4">
+                    <!--button id="quickSaveBtn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold p-1 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        <i class="fas fa-save text-sm"></i>
+                    </button>
+                    <button id="quickRestoreBtn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold p-1 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        <i class="fas fa-undo text-sm"></i>
+                    </button>
+                    <button id="undoBtn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold p-1 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        <i class="fas fa-undo-alt text-sm"></i>
+                    </button>
+                    <button id="redoBtn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold p-1 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        <i class="fas fa-redo-alt text-sm"></i>
+                    </button-->
+                </div>
+
+                <div class="mt-4">
+                    <h2 class="text-sm font-semibold mb-1 text-gray-700">Canvas Controls</h2>
+                    <div class="flex flex-col gap-2">
+                        <button id="zoomInBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-1.5 px-3 text-sm rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
+                            <i class="fas fa-search-plus mr-1.5 text-sm"></i>Zoom +
+                        </button>
+                        <button id="zoomOutBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-1.5 px-3 text-sm rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
+                            <i class="fas fa-search-minus mr-1.5 text-sm"></i>Zoom -
+                        </button>
+                        <button id="resetZoomBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-1.5 px-3 text-sm rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
+                            <i class="fas fa-compress-arrows-alt mr-1.5 text-sm"></i>Reset
+                        </button>
+                        <div id="zoomLevelLabel" class="text-center text-sm text-gray-600 mt-2">Zoom: 100%</div>
                     </div>
                 </div>
             </div>
-            <input type="file" id="fileInput" class="hidden" accept=".json">
-            <div class="border-t border-gray-300 my-2"></div>
 
-            <!-- Pointer Elements -->
-            <div id="saveCanvasPointer" class="pointer-overlay hidden">
-                <div class="pointer-pointer"></div>
-                <div class="pointer-text">Save Canvas</div>
+            <!-- Right Canvas Area -->
+            <div class="canvas-container">
+                <canvas id="myCanvas"></canvas>
             </div>
-            <div id="loadCanvasPointer" class="pointer-overlay hidden">
-                <div class="pointer-pointer"></div>
-                <div class="pointer-text">Load Canvas</div>
-            </div>
+        </div>
 
-
-            <!-- Feature Buttons -->
-            <button id="uploadImageBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                <i class="fas fa-upload mr-2"></i>Choose Image
-            </button>
-            <input type="file" id="imageInput" accept="image/*" class="hidden">
-            <div id="fileNameDisplay" class="text-center text-sm text-blue-600 mt-2 font-medium bg-white px-3 py-1 rounded-full shadow-sm w-full"></div>
-
-            <button id="createBubbleBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                <i class="fas fa-comment-dots mr-2"></i>Create Speech Bubble
-            </button>
-            <div id="bubblePointer" class="pointer-overlay hidden">
-                <div class="pointer-pointer"></div>
-                <div class="pointer-text">Drag To Place Bubble</div>
-            </div>
-
-            <button id="createArrowBtn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                <i class="fas fa-arrow-right mr-2"></i>Create Stretchable Arrow
-            </button>
-            <div id="arrowPointer" class="pointer-overlay hidden">
-                <div class="pointer-pointer"></div>
-                <div class="pointer-text">Drag To Make Arrow</div>
-            </div>
-
-
-
-            <button id="clearCanvasBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                <i class="fas fa-trash-alt mr-2"></i>Clear Canvas
-            </button>
-
-            <button id="howToBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                <i class="fas fa-info-circle mr-2"></i>How To Use
-            </button>
-            <div class="text-center text-xl text-blue-600 mt-4 font-bold">Double Click New Objects To Edit Properties</div>
-
-            <div class="mt-4">
-                <h2 class="text-sm font-semibold mb-1 text-gray-700">Canvas Controls</h2>
-                <div class="flex flex-col gap-2">
-                    <button id="zoomInBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                        <i class="fas fa-search-plus mr-2"></i>Zoom +
+        <!-- Speech Bubble Editor Modal -->
+        <div id="bubbleEditorModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full z-50 flex items-center justify-center p-2">
+            <div class="modal-content">
+                <h2 class="text-lg font-bold mb-1 text-gray-800">Edit Speech Bubble</h2>
+                <form id="bubbleForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+                    <div class="form-group">
+                        <label for="bubbleText">Text String:</label>
+                        <input type="text" id="bubbleText" class="w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="bubbleFontSize">Font Size:</label>
+                        <input type="number" id="bubbleFontSize" min="8" max="100" class="w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="bubbleFontFamily">Font Family:</label>
+                        <select id="bubbleFontFamily" class="w-full">
+                            <option value="Arial">Arial</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="Helvetica">Helvetica</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Palatino">Palatino</option>
+                            <option value="Garamond">Garamond</option>
+                            <option value="Trebuchet MS">Trebuchet MS</option>
+                            <option value="Impact">Impact</option>
+                            <option value="Inter">Inter</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="bubbleFillColor">Fill Color:</label>
+                        <input type="color" id="bubbleFillColor" class="w-full h-10">
+                    </div>
+                    <div class="form-group">
+                        <label for="bubbleFillTransparency">Fill Transparency:</label>
+                        <input type="range" id="bubbleFillTransparency" min="0" max="1" step="0.01" class="w-full">
+                        <span id="bubbleFillTransparencyValue" class="text-xs text-gray-500 text-right"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="bubbleBorderColor">Border Color:</label>
+                        <input type="color" id="bubbleBorderColor" class="w-full h-10">
+                    </div>
+                    <div class="form-group">
+                        <label for="bubbleBorderTransparency">Border Transparency:</label>
+                        <input type="range" id="bubbleBorderTransparency" min="0" max="1" step="0.01" class="w-full">
+                        <span id="bubbleBorderTransparencyValue" class="text-xs text-gray-500 text-right"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="bubbleBorderWidth">Border Width:</label>
+                        <input type="number" id="bubbleBorderWidth" min="0" max="10" class="w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="bubbleTextColor">Text Color:</label>
+                        <input type="color" id="bubbleTextColor" class="w-full h-10">
+                    </div>
+                    <div class="form-group">
+                        <label for="bubbleTailSide">Tail Side:</label>
+                        <select id="bubbleTailSide" class="w-full">
+                            <option value="top">Top</option>
+                            <option value="bottom">Bottom</option>
+                            <option value="left">Left</option>
+                            <option value="right">Right</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="bubbleTailBaseWidth">Tail Base Width:</label>
+                        <input type="number" id="bubbleTailBaseWidth" min="0" max="50" class="w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="bubbleCornerRadius">Corner Radius:</label>
+                        <input type="number" id="bubbleCornerRadius" min="0" max="50" class="w-full">
+                    </div>
+                    <div class="form-group flex items-center justify-start mt-2">
+                        <input type="checkbox" id="bubbleFlipText" class="mr-2 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <label for="bubbleFlipText" class="mb-0">Flip Text 180 degrees</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="bubbleTailAlignment">Tail Alignment:</label>
+                        <select id="bubbleTailAlignment" class="w-full">
+                            <option value="center">Center</option>
+                            <option value="start">Start</option>
+                            <option value="end">End</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="bubblePaddingX">Padding X:</label>
+                        <input type="number" id="bubblePaddingX" min="0" max="100" class="w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="bubblePaddingY">Padding Y:</label>
+                        <input type="number" id="bubblePaddingY" min="0" max="100" class="w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="bubbleRotation">Rotation:</label>
+                        <input type="number" id="bubbleRotation" min="-180" max="180" class="w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="bubbleTailLength">Tail Length:</label>
+                        <input type="number" id="bubbleTailLength" min="0" max="100" class="w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="bubbleTailWidth">Tail Width:</label>
+                        <input type="number" id="bubbleTailWidth" min="0" max="50" class="w-full">
+                    </div>
+                </form>
+                <div class="flex justify-end gap-1 mt-2">
+                    <button id="copyBubbleBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        Copy Bubble
                     </button>
-                    <button id="zoomOutBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                        <i class="fas fa-search-minus mr-2"></i>Zoom -
+                    <button id="pasteBubbleBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-2 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        Paste Bubble
                     </button>
-                    <button id="resetZoomBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                        <i class="fas fa-compress-arrows-alt mr-2"></i>Reset
+                    <button id="deleteBubbleBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        Delete Bubble
                     </button>
-                    <div id="zoomLevelLabel" class="text-center text-sm text-gray-600 mt-2">Zoom: 100%</div>
+                    <button id="cancelBubbleBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        Cancel
+                    </button>
+                    <button id="applyBubbleBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        Apply Bubble
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Right Canvas Area -->
-        <div class="canvas-container">
-            <canvas id="myCanvas"></canvas>
-        </div>
-    </div>
-
-    <!-- Speech Bubble Editor Modal -->
-    <div id="bubbleEditorModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full z-50 flex items-center justify-center p-2">
-        <div class="modal-content">
-            <h2 class="text-lg font-bold mb-1 text-gray-800">Edit Speech Bubble</h2>
-            <form class="mt-1 grid grid-cols-1 md:grid-cols-2 gap-x-2 gap-y-1">
-                <div class="form-group">
-                    <label for="bubbleText">Text String:</label>
-                    <input type="text" id="bubbleText" class="w-full">
+        <!-- Arrow Editor Modal -->
+        <div id="arrowEditorModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2 class="text-lg font-bold mb-2 text-gray-800">Edit Stretchable Arrow</h2>
+                <form id="arrowForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+                    <div class="form-group">
+                        <label for="arrowText">Text String:</label>
+                        <input type="text" id="arrowText" class="w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="arrowFontSize">Font Size:</label>
+                        <input type="number" id="arrowFontSize" min="8" max="100" class="w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="arrowFontFamily">Font Family:</label>
+                        <select id="arrowFontFamily" class="w-full">
+                            <option value="Arial">Arial</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="Helvetica">Helvetica</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Palatino">Palatino</option>
+                            <option value="Garamond">Garamond</option>
+                            <option value="Trebuchet MS">Trebuchet MS</option>
+                            <option value="Impact">Impact</option>
+                            <option value="Inter">Inter</option>
+                            <!-- Add more font options as needed -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="arrowRotation">Rotation (Degrees):</label>
+                        <input type="number" id="arrowRotation" min="0" max="360" step="1" class="w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="arrowFillColor">Line Color:</label>
+                        <input type="color" id="arrowFillColor" class="w-full h-10">
+                    </div>
+                    <div class="form-group">
+                        <label for="arrowFillTransparency">Line Transparency:</label>
+                        <input type="range" id="arrowFillTransparency" min="0" max="1" step="0.01" class="w-full">
+                        <span id="arrowFillTransparencyValue" class="text-xs text-gray-500 text-right"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="arrowTextColor">Text Color:</label>
+                        <input type="color" id="arrowTextColor" class="w-full h-10">
+                    </div>
+                    <div class="form-group">
+                        <label for="arrowTextBackgroundColor">Text Background Color:</label>
+                        <input type="color" id="arrowTextBackgroundColor" class="w-full h-10">
+                    </div>
+                    <div class="form-group">
+                        <label for="arrowLineWidth">Line Width:</label>
+                        <input type="number" id="arrowLineWidth" min="1" max="20" class="w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="arrowHeadSize">Head Size:</label>
+                        <input type="number" id="arrowHeadSize" min="5" max="50" class="w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="arrowPaddingX">Padding X:</label>
+                        <input type="number" id="arrowPaddingX" min="0" max="100" class="w-full">
+                    </div>
+                    <div class="form-group">
+                        <label for="arrowPaddingY">Padding Y:</label>
+                        <input type="number" id="arrowPaddingY" min="0" max="100" class="w-full">
+                    </div>
+                    <div class="form-group flex items-center justify-start mt-2">
+                        <input type="checkbox" id="arrowFlipText" class="mr-2 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <label for="arrowFlipText" class="mb-0">Flip Text 180 degrees</label>
+                    </div>
+                </form>
+                <div class="flex justify-end gap-2 mt-4">
+                    <button id="copyArrowBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-1.5 px-3 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        Copy Arrow
+                    </button>
+                    <button id="pasteArrowBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1.5 px-3 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        Paste Arrow
+                    </button>
+                    <button id="deleteArrowBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        Delete Arrow
+                    </button>
+                    <button id="cancelArrowBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        Cancel
+                    </button>
+                    <button id="applyArrowBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        Apply Arrow
+                    </button>
                 </div>
-                <div class="form-group">
-                    <label for="bubbleFontSize">Font Size:</label>
-                    <input type="number" id="bubbleFontSize" min="8" max="72" class="w-full">
-                </div>
-                <div class="form-group">
-                    <label for="bubbleFont">Font Family:</label>
-                    <select id="bubbleFont" class="w-full">
-                        <option value="Arial">Arial</option>
-                        <option value="Helvetica">Helvetica</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Courier New">Courier New</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Verdana">Verdana</option>
-                        <option value="Comic Sans MS">Comic Sans MS</option>
-                        <option value="Impact">Impact</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="bubbleFill">Fill Color:</label>
-                    <input type="color" id="bubbleFill" class="w-full h-8">
-                </div>
-                <div class="form-group">
-                    <label for="bubbleFillTransparency">Fill Transparency:</label>
-                    <input type="range" id="bubbleFillTransparency" min="0" max="1" step="0.01" class="w-full">
-                    <span id="bubbleFillTransparencyValue" class="text-xs text-gray-500 text-right"></span>
-                </div>
-                <div class="form-group">
-                    <label for="bubbleBorderColor">Border Color:</label>
-                    <input type="color" id="bubbleBorderColor" class="w-full h-8">
-                </div>
-                <div class="form-group">
-                    <label for="bubbleBorderTransparency">Border Transparency:</label>
-                    <input type="range" id="bubbleBorderTransparency" min="0" max="1" step="0.01" class="w-full">
-                    <span id="bubbleBorderTransparencyValue" class="text-xs text-gray-500 text-right"></span>
-                </div>
-                <div class="form-group">
-                    <label for="bubbleTextColor">Text Color:</label>
-                    <input type="color" id="bubbleTextColor" class="w-full h-8">
-                </div>
-                <div class="form-group">
-                    <label for="bubbleBorderWidth">Border Width:</label>
-                    <input type="number" id="bubbleBorderWidth" min="0" max="20" class="w-full">
-                </div>
-                <div class="form-group">
-                    <label for="bubbleTailSide">Tail Side:</label>
-                    <select id="bubbleTailSide" class="w-full">
-                        <option value="bottom">Bottom</option>
-                        <option value="top">Top</option>
-                        <option value="left">Left</option>
-                        <option value="right">Right</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="bubbleTailAlignment">Tail Alignment:</label>
-                    <select id="bubbleTailAlignment" class="w-full">
-                        <option value="center">Center</option>
-                        <option value="start">Start</option>
-                        <option value="end">End</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="bubblePaddingX">Padding X:</label>
-                    <input type="number" id="bubblePaddingX" min="0" max="100" class="w-full">
-                </div>
-                <div class="form-group">
-                    <label for="bubblePaddingY">Padding Y:</label>
-                    <input type="number" id="bubblePaddingY" min="0" max="100" class="w-full">
-                </div>
-                <div class="form-group">
-                    <label for="bubbleRotation">Rotation:</label>
-                    <input type="number" id="bubbleRotation" min="-180" max="180" class="w-full">
-                </div>
-                <div class="form-group">
-                    <label for="bubbleTailLength">Tail Length:</label>
-                    <input type="number" id="bubbleTailLength" min="0" max="100" class="w-full">
-                </div>
-                <div class="form-group">
-                    <label for="bubbleTailWidth">Tail Width:</label>
-                    <input type="number" id="bubbleTailWidth" min="0" max="50" class="w-full">
-                </div>
-            </form>
-            <div class="flex justify-end gap-1 mt-2">
-                <button id="copyBubbleBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded-lg shadow-md transition duration-200 ease-in-out">
-                    Copy Bubble
-                </button>
-                <button id="pasteBubbleBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-2 rounded-lg shadow-md transition duration-200 ease-in-out">
-                    Paste Bubble
-                </button>
-                <button id="deleteBubbleBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded-lg shadow-md transition duration-200 ease-in-out">
-                    Delete Bubble
-                </button>
-                <button id="cancelBubbleBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
-                    Cancel
-                </button>
-                <button id="applyBubbleBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
-                    Apply Bubble
-                </button>
             </div>
         </div>
-    </div>
 
-    <!-- Arrow Editor Modal -->
-    <div id="arrowEditorModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2 class="text-lg font-bold mb-2 text-gray-800">Edit Stretchable Arrow</h2>
-            <form id="arrowForm" class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-                <div class="form-group">
-                    <label for="arrowText">Text String:</label>
-                    <input type="text" id="arrowText" class="w-full">
+        <!-- How To Modal -->
+        <div id="howToModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">How To Use This Editor</h2>
+                <div class="prose text-gray-700">
+                    <p>Welcome to the Canvas Image Editor! Here's how to get started:</p>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li><strong>Upload Image:</strong> Click "Upload Image" to select a base image for editing.</li>
+                        <li><strong>Create Speech Bubble:</strong> Click this button, then click and drag on the canvas to draw a new speech bubble.</li>
+                        <li><strong>Create Stretchable Arrow:</strong> Click this button, then click and drag on the canvas to draw a new arrow.</li>
+                        <li><strong>Edit Shapes:</strong> Double-click on any speech bubble or arrow to open its property editor. You can change text, colors, sizes, and more.</li>
+                        <li><strong>Move Shapes:</strong> Click and drag any shape to reposition it on the canvas.</li>
+                        <li><strong>Resize Shapes:</strong> Click on a shape to select it, then drag the small square handles that appear around its bounding box to resize.</li>
+                        <li><strong>Move Speech Bubble Tail:</strong> For speech bubbles, click and drag the small circle handle at the tip of the tail to reposition it.</li>
+                        <li><strong>Rotate Shapes:</strong> Hold down the <kbd>Ctrl</kbd> key, then click on a shape. Four circular rotation handles will appear outside the shape. Drag any of these handles to rotate the shape.</li>
+                        <li><strong>Zoom:</strong> Use the "Zoom +" and "Zoom -" buttons to adjust the canvas view. "Zoom Reset" returns to the default view.</li>
+                        <li><strong>Save Edited Image:</strong> Click to download your edited canvas as a PNG image.</li>
+                        <li><strong>Clear Canvas:</strong> Clears all content from the canvas.</li>
+                    </ul>
+                    <p class="mt-4">Enjoy creating!</p>
                 </div>
-                <div class="form-group">
-                    <label for="arrowFontSize">Font Size:</label>
-                    <input type="number" id="arrowFontSize" min="8" max="100" class="w-full">
+                <div class="flex justify-end mt-6">
+                    <button id="closeHowToBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        Got It!
+                    </button>
                 </div>
-                <div class="form-group">
-                    <label for="arrowFontFamily">Font Family:</label>
-                    <select id="arrowFontFamily" class="w-full">
-                        <option value="Arial">Arial</option>
-                        <option value="Verdana">Verdana</option>
-                        <option value="Helvetica">Helvetica</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Courier New">Courier New</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Palatino">Palatino</option>
-                        <option value="Garamond">Garamond</option>
-                        <option value="Trebuchet MS">Trebuchet MS</option>
-                        <option value="Impact">Impact</option>
-                        <option value="Inter">Inter</option>
-                        <!-- Add more font options as needed -->
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="arrowRotation">Rotation (Degrees):</label>
-                    <input type="number" id="arrowRotation" min="0" max="360" step="1" class="w-full">
-                </div>
-                <div class="form-group">
-                    <label for="arrowFillColor">Line Color:</label>
-                    <input type="color" id="arrowFillColor" class="w-full h-10">
-                </div>
-                <div class="form-group">
-                    <label for="arrowFillTransparency">Line Transparency:</label>
-                    <input type="range" id="arrowFillTransparency" min="0" max="1" step="0.01" class="w-full">
-                    <span id="arrowFillTransparencyValue" class="text-xs text-gray-500 text-right"></span>
-                </div>
-                <div class="form-group">
-                    <label for="arrowTextColor">Text Color:</label>
-                    <input type="color" id="arrowTextColor" class="w-full h-10">
-                </div>
-                <div class="form-group">
-                    <label for="arrowTextBackgroundColor">Text Background Color:</label>
-                    <input type="color" id="arrowTextBackgroundColor" class="w-full h-10">
-                </div>
-                <div class="form-group">
-                    <label for="arrowLineWidth">Line Width:</label>
-                    <input type="number" id="arrowLineWidth" min="1" max="20" class="w-full">
-                </div>
-                <div class="form-group">
-                    <label for="arrowHeadSize">Head Size:</label>
-                    <input type="number" id="arrowHeadSize" min="5" max="50" class="w-full">
-                </div>
-                <div class="form-group">
-                    <label for="arrowPaddingX">Padding X:</label>
-                    <input type="number" id="arrowPaddingX" min="0" max="100" class="w-full">
-                </div>
-                <div class="form-group">
-                    <label for="arrowPaddingY">Padding Y:</label>
-                    <input type="number" id="arrowPaddingY" min="0" max="100" class="w-full">
-                </div>
-                <div class="form-group flex items-center justify-start mt-2">
-                    <input type="checkbox" id="arrowFlipText" class="mr-2 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                    <label for="arrowFlipText" class="mb-0">Flip Text 180 degrees</label>
-                </div>
-            </form>
-            <div class="flex justify-end gap-2 mt-4">
-                <button id="copyArrowBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-1.5 px-3 rounded-lg shadow-md transition duration-200 ease-in-out">
-                    Copy Arrow
-                </button>
-                <button id="pasteArrowBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1.5 px-3 rounded-lg shadow-md transition duration-200 ease-in-out">
-                    Paste Arrow
-                </button>
-                <button id="deleteArrowBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
-                    Delete Arrow
-                </button>
-                <button id="cancelArrowBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
-                    Cancel
-                </button>
-                <button id="applyArrowBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
-                    Apply Arrow
-                </button>
             </div>
         </div>
-    </div>
 
-    <!-- How To Modal -->
-    <div id="howToModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">How To Use This Editor</h2>
-            <div class="prose text-gray-700">
-                <p>Welcome to the Canvas Image Editor! Here's how to get started:</p>
-                <ul class="list-disc pl-5 space-y-2">
-                    <li><strong>Upload Image:</strong> Click "Upload Image" to select a base image for editing.</li>
-                    <li><strong>Create Speech Bubble:</strong> Click this button, then click and drag on the canvas to draw a new speech bubble.</li>
-                    <li><strong>Create Stretchable Arrow:</strong> Click this button, then click and drag on the canvas to draw a new arrow.</li>
-                    <li><strong>Edit Shapes:</strong> Double-click on any speech bubble or arrow to open its property editor. You can change text, colors, sizes, and more.</li>
-                    <li><strong>Move Shapes:</strong> Click and drag any shape to reposition it on the canvas.</li>
-                    <li><strong>Resize Shapes:</strong> Click on a shape to select it, then drag the small square handles that appear around its bounding box to resize.</li>
-                    <li><strong>Move Speech Bubble Tail:</strong> For speech bubbles, click and drag the small circle handle at the tip of the tail to reposition it.</li>
-                    <li><strong>Rotate Shapes:</strong> Hold down the <kbd>Ctrl</kbd> key, then click on a shape. Four circular rotation handles will appear outside the shape. Drag any of these handles to rotate the shape.</li>
-                    <li><strong>Zoom:</strong> Use the "Zoom +" and "Zoom -" buttons to adjust the canvas view. "Zoom Reset" returns to the default view.</li>
-                    <li><strong>Save Edited Image:</strong> Click to download your edited canvas as a PNG image.</li>
-                    <li><strong>Clear Canvas:</strong> Clears all content from the canvas.</li>
-                </ul>
-                <p class="mt-4">Enjoy creating!</p>
-            </div>
-            <div class="flex justify-end mt-6">
-                <button id="closeHowToBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
-                    Got It!
-                </button>
+        <!-- Custom Confirmation Modal -->
+        <div id="confirmModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">Confirm Action</h2>
+                <p id="confirmMessage" class="text-gray-700 mb-6">Are you sure you want to clear the canvas? This action cannot be undone.</p>
+                <div class="flex justify-end gap-2">
+                    <button id="confirmCancelBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        Cancel
+                    </button>
+                    <button id="confirmOkBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
+                        Confirm
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-
-    <!-- Custom Confirmation Modal -->
-    <div id="confirmModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">Confirm Action</h2>
-            <p id="confirmMessage" class="text-gray-700 mb-6">Are you sure you want to clear the canvas? This action cannot be undone.</p>
-            <div class="flex justify-end gap-2">
-                <button id="confirmCancelBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
-                    Cancel
-                </button>
-                <button id="confirmOkBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out">
-                    Confirm
-                </button>
-            </div>
-        </div>
-    </div>
-
 
     <script>
         // Global variables
@@ -1854,6 +1893,12 @@
             clearTimeout(arrowPointerTimeout);
         });
 
+        // Initialize shape class registry after shape class definitions
+        window.shapeClasses = {
+            SpeechBubble: SpeechBubble,
+            Arrow: Arrow
+        };
+
         // --- Canvas Drawing and Management ---
 
         /**
@@ -2305,9 +2350,19 @@
                     console.log('   New shape too small, removed.');
                 } else {
                     console.log('   New shape finalized.');
+                    saveState(); // Save state after drawing a new shape
                 }
             }
             drawingMode = null;
+            
+            // If we were moving or resizing an existing shape
+            if (isDragging || isResizing || isRotating || isTailMoving) {
+                if (selectedShape) {
+                    saveState(); // Save state after moving/resizing/rotating
+                    showPointer('canvas', 'Shape Moved!');
+                }
+            }
+            
             isDragging = false;
             isResizing = false;
             resizeHandle = null;
@@ -2377,6 +2432,31 @@
         }
 
         // --- Double Click for Editing Modals ---
+
+        // Show pointer animation
+        function showPointer(buttonId, text) {
+            const button = document.getElementById(buttonId);
+            if (!button) return;
+
+            const pointer = document.createElement('div');
+            pointer.className = 'pointer-overlay';
+            pointer.innerHTML = `
+                <div class="pointer-pointer">
+                    <div class="pointer-text">${text}</div>
+                </div>
+            `;
+            document.body.appendChild(pointer);
+
+            // Position pointer relative to button
+            const rect = button.getBoundingClientRect();
+            pointer.style.left = `${rect.left + rect.width / 2}px`;
+            pointer.style.top = `${rect.top - 100}px`;
+
+            // Remove pointer after 2 seconds
+            setTimeout(() => {
+                pointer.remove();
+            }, 2000);
+        }
 
         canvas.addEventListener('dblclick', handleDoubleClick);
         canvas.addEventListener('wheel', handleWheel, { passive: false });
@@ -2518,17 +2598,15 @@
             const loadImageAndRestore = () => {
                 if (state.shapes && Array.isArray(state.shapes)) {
                     shapes.push(...state.shapes.map(shapeData => {
-                        let shape;
-                        if (shapeData.type === 'SpeechBubble') {
-                            shape = new SpeechBubble(0,0,0,0); // Temp values
-                        } else if (shapeData.type === 'Arrow') {
-                            shape = new Arrow(0,0,0,0); // Temp values
+                        const ShapeClass = window.shapeClasses[shapeData.type];
+                        if (!ShapeClass) {
+                            console.error('Shape class not found:', shapeData.type);
+                            return null;
                         }
-                        Object.assign(shape, shapeData.properties);
+                        const shape = new ShapeClass(shapeData.properties);
                         return shape;
-                    }));
+                    }).filter(shape => shape !== null));
                 }
-
                 currentZoom = state.zoom || 1;
                 panX = state.panX || 0;
                 panY = state.panY || 0;
@@ -2561,6 +2639,275 @@
             exportToFile();
             fileMenuDropdown.classList.add('hidden');
         });
+
+        // Quick Save/Restore State
+        let quickSaveData = null;
+        let lastQuickSaveTime = null;
+        let history = [];  // Array to store all states
+        let currentHistoryIndex = -1;  // Track current position in history
+
+        // Form elements are already declared earlier in the code
+
+        // Function to save current state to history
+        function saveState() {
+            // Create state snapshot
+            const state = {
+                shapes: shapes.map(shape => ({
+                    type: shape.constructor.name,
+                    data: {
+                        x: shape.x,
+                        y: shape.y,
+                        width: shape.width,
+                        height: shape.height,
+                        rotation: shape.rotation,
+                        fillColor: shape.fillColor,
+                        fillTransparency: shape.fillTransparency,
+                        borderColor: shape.borderColor,
+                        borderTransparency: shape.borderTransparency,
+                        borderWidth: shape.borderWidth,
+                        // Add any other properties specific to each shape type
+                        ...(shape instanceof SpeechBubble && {
+                            text: shape.text,
+                            fontSize: shape.fontSize,
+                            fontFamily: shape.fontFamily,
+                            textColor: shape.textColor,
+                            tailX: shape.tailX,
+                            tailY: shape.tailY,
+                            tailBaseSide: shape.tailBaseSide,
+                            tailBaseAlignment: shape.tailBaseAlignment,
+                            paddingX: shape.paddingX,
+                            paddingY: shape.paddingY,
+                            cornerRadius: shape.cornerRadius,
+                            flipText: shape.flipText,
+                            tailBaseWidth: shape.tailBaseWidth
+                        }),
+                        ...(shape instanceof Arrow && {
+                            x1: shape.x1,
+                            y1: shape.y1,
+                            x2: shape.x2,
+                            y2: shape.y2,
+                            text: shape.text,
+                            fontSize: shape.fontSize,
+                            fontFamily: shape.fontFamily,
+                            textColor: shape.textColor,
+                            textBackgroundColor: shape.textBackgroundColor,
+                            lineWidth: shape.lineWidth,
+                            headSize: shape.headSize,
+                            paddingX: shape.paddingX,
+                            paddingY: shape.paddingY,
+                            flipText: shape.flipText
+                        })
+                    }
+                })),
+                zoom: currentZoom,
+                pan: {
+                    x: canvasContainer ? canvasContainer.scrollLeft : 0,
+                    y: canvasContainer ? canvasContainer.scrollTop : 0
+                }
+            };
+            
+            // If we're not at the end of history, clear future states
+            if (currentHistoryIndex < history.length - 1) {
+                history.length = currentHistoryIndex + 1;
+            }
+            
+            // Add new state and update index
+            history.push(state);
+            currentHistoryIndex++;
+            
+            console.log('State saved:', {
+                shapesCount: state.shapes.length,
+                zoom: state.zoom,
+                pan: state.pan,
+                historyLength: history.length,
+                currentIndex: currentHistoryIndex
+            });
+        }
+
+        // Function to handle Apply Bubble button save
+        function handleApplyBubbleSave() {
+            console.log('Applying bubble changes and saving state');
+            if (selectedShape && selectedShape instanceof SpeechBubble) {
+                // Update bubble properties
+                selectedShape.text = bubbleText.value;
+                selectedShape.fontSize = parseInt(bubbleFontSize.value) || 14;
+                selectedShape.fontFamily = bubbleFont.value;
+                selectedShape.textColor = bubbleTextColor.value;
+                selectedShape.fillColor = bubbleFill.value;
+                selectedShape.fillTransparency = parseFloat(bubbleFillTransparency.value) || 1;
+                selectedShape.borderColor = bubbleBorderColor.value;
+                selectedShape.borderTransparency = parseFloat(bubbleBorderTransparency.value) || 1;
+                selectedShape.borderWidth = parseInt(bubbleBorderWidth.value) || 1;
+                selectedShape.tailBaseSide = bubbleTailSide.value;
+                selectedShape.tailBaseAlignment = bubbleTailAlignment.value;
+                
+                // Save the state after applying changes
+                saveState();
+                
+                // Update UI
+                drawCanvas();
+                showPointer('applyBubbleBtn', 'Bubble Updated!');
+            }
+        }
+
+        // Function to restore a state from history
+        function restoreState(state) {
+            // Restore shapes
+            shapes = state.shapes.map(savedShape => {
+                const ShapeClass = window.shapeClasses[savedShape.type];
+                const shape = new ShapeClass();
+                Object.assign(shape, savedShape.data);
+                
+                // For SpeechBubble, update tail position based on new properties
+                if (shape instanceof SpeechBubble) {
+                    shape.updateTailTipPosition();
+                }
+                
+                // For Arrow, update bounding box based on new points
+                if (shape instanceof Arrow) {
+                    shape.updateBoundingBox();
+                }
+                
+                return shape;
+            });
+            
+            // Restore zoom and pan
+            currentZoom = state.zoom;
+            if (canvasContainer) {
+                canvasContainer.scrollLeft = state.pan.x;
+                canvasContainer.scrollTop = state.pan.y;
+            }
+            
+            // Update UI and redraw canvas
+            drawCanvas();
+            
+            console.log('State restored:', {
+                shapesCount: shapes.length,
+                zoom: currentZoom,
+                pan: {
+                    x: canvasContainer ? canvasContainer.scrollLeft : 0,
+                    y: canvasContainer ? canvasContainer.scrollTop : 0
+                },
+                historyLength: history.length,
+                currentIndex: currentHistoryIndex
+            });
+        }
+
+        // Add event listeners for quick save/restore
+        const quickSaveBtn = document.getElementById('quickSaveBtn');
+        const quickRestoreBtn = document.getElementById('quickRestoreBtn');
+        const canvasContainer = document.querySelector('.canvas-container');
+
+        if (quickSaveBtn) {
+            quickSaveBtn.addEventListener('click', () => {
+                saveState();
+                showPointer('quickSaveBtn', 'State Saved!');
+            });
+        } else {
+            console.error('Quick Save Button not found!');
+        }
+
+        if (quickRestoreBtn) {
+            quickRestoreBtn.addEventListener('click', () => {
+                console.log('Quick Restore Button Clicked');
+                
+                if (!quickSaveData) {
+                    console.log('No quick save data available');
+                    showPointer('quickRestoreBtn', 'No quick save available!');
+                    return;
+                }
+
+                console.log('Restoring state:', {
+                    shapesCount: quickSaveData.shapes.length,
+                    zoom: quickSaveData.zoom,
+                    pan: quickSaveData.pan
+                });
+
+                // Restore saved state
+                shapes = quickSaveData.shapes.map(savedShape => {
+                    const ShapeClass = window.shapeClasses[savedShape.type];
+                    if (!ShapeClass) {
+                        console.error('Shape class not found:', savedShape.type);
+                        return null;
+                    }
+                    
+                    // Create new shape instance and update its properties
+                    const shape = new ShapeClass();
+                    Object.assign(shape, savedShape.data);
+                    
+                    // For SpeechBubble, update tail position based on new properties
+                    if (shape instanceof SpeechBubble) {
+                        shape.updateTailTipPosition();
+                    }
+                    
+                    // For Arrow, update bounding box based on new points
+                    if (shape instanceof Arrow) {
+                        shape.updateBoundingBox();
+                    }
+                    
+                    return shape;
+                }).filter(shape => shape !== null);
+                
+                console.log('Restored shapes:', shapes);
+                
+                currentZoom = quickSaveData.zoom;
+                if (canvasContainer) {
+                    canvasContainer.scrollLeft = quickSaveData.pan.x;
+                    canvasContainer.scrollTop = quickSaveData.pan.y;
+                    console.log('Restored pan:', {
+                        x: quickSaveData.pan.x,
+                        y: quickSaveData.pan.y
+                    });
+                }
+                
+                drawCanvas();
+                console.log('Canvas redrawn after restore');
+                
+                showPointer('quickRestoreBtn', 'Restored!');
+                console.log('State restored from:', lastQuickSaveTime);
+            });
+        } else {
+            console.error('Quick Restore Button not found!');
+        }
+
+        // Undo/Redo Functions
+        function undo() {
+            if (currentHistoryIndex > 0) {
+                currentHistoryIndex--;
+                const state = history[currentHistoryIndex];
+                restoreState(state);
+                showPointer('undoBtn', 'Undo Applied!');
+            } else {
+                showPointer('undoBtn', 'No More Undo!');
+            }
+        }
+
+        function redo() {
+            if (currentHistoryIndex < history.length - 1) {
+                currentHistoryIndex++;
+                const state = history[currentHistoryIndex];
+                restoreState(state);
+                showPointer('redoBtn', 'Redo Applied!');
+            } else {
+                showPointer('redoBtn', 'No More Redo!');
+            }
+        }
+
+        // Add event listeners for undo/redo
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+
+        if (undoBtn) {
+            undoBtn.addEventListener('click', undo);
+        } else {
+            console.error('Undo Button not found!');
+        }
+
+        if (redoBtn) {
+            redoBtn.addEventListener('click', redo);
+        } else {
+            console.error('Redo Button not found!');
+        }
 
         importFromFileBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -2844,6 +3191,23 @@
                 rotationHandle = null;
                 isTailMoving = false;
                 
+                // Handle mouse up
+                canvas.addEventListener('mouseup', (e) => {
+                    isDragging = false;
+                    isResizing = false;
+                    isRotating = false;
+                    isTailMoving = false;
+                    resizeHandle = null;
+                    rotationHandle = null;
+                    
+                    // Save state after movement if a shape was selected
+                    if (selectedShape) {
+                        saveState();
+                    }
+                    
+                    drawCanvas();
+                });    
+                
                 // Reset pan and zoom
                 currentZoom = 1;
                 panX = 0;
@@ -3045,8 +3409,8 @@
             // Set all values
             bubbleText.value = bubble.text;
             bubbleFontSize.value = bubble.fontSize;
-            bubbleFont.value = bubble.fontFamily;
-            bubbleFill.value = bubble.fillColor;
+            bubbleFontFamily.value = bubble.fontFamily;
+            bubbleFillColor.value = bubble.fillColor;
             bubbleFillTransparency.value = bubble.fillTransparency;
             bubbleFillTransparencyValue.textContent = bubble.fillTransparency.toFixed(2);
             bubbleBorderColor.value = bubble.borderColor;
@@ -3059,6 +3423,9 @@
             bubblePaddingX.value = bubble.paddingX;
             bubblePaddingY.value = bubble.paddingY;
             bubbleRotation.value = bubble.rotation;
+            bubbleTailBaseWidth.value = bubble.tailBaseWidth;
+            bubbleCornerRadius.value = bubble.cornerRadius;
+            bubbleFlipText.checked = bubble.flipText;
             bubbleTailLength.value = bubble.tailLength;
             bubbleTailWidth.value = bubble.tailWidth;
 
@@ -3078,28 +3445,35 @@
         applyBubbleBtn.addEventListener('click', (e) => {
             e.preventDefault();
             if (selectedShape && selectedShape instanceof SpeechBubble) {
+                // Update bubble properties
                 selectedShape.updateFromEditor({
                     text: bubbleText.value,
-                    fontSize: bubbleFontSize.value,
+                    fontSize: parseInt(bubbleFontSize.value) || 14,
                     fontFamily: bubbleFontFamily.value,
-                    rotation: bubbleRotation.value,
+                    rotation: parseFloat(bubbleRotation.value) || 0,
                     fillColor: bubbleFillColor.value,
-                    fillTransparency: bubbleFillTransparency.value,
+                    fillTransparency: parseFloat(bubbleFillTransparency.value) || 1,
                     borderColor: bubbleBorderColor.value,
-                    borderTransparency: bubbleBorderTransparency.value,
-                    borderWidth: bubbleBorderWidth.value,
+                    borderTransparency: parseFloat(bubbleBorderTransparency.value) || 1,
+                    borderWidth: parseInt(bubbleBorderWidth.value) || 1,
                     textColor: bubbleTextColor.value,
-                    tailBaseSide: bubbleTailSide.value, // Get new dropdown value
-                    tailBaseAlignment: bubbleTailAlignment.value, // Get new dropdown value
-                    tailBaseWidth: bubbleTailBaseWidth.value,
-                    paddingX: bubblePaddingX.value,
-                    paddingY: bubblePaddingY.value,
-                    cornerRadius: bubbleCornerRadius.value,
+                    tailBaseSide: bubbleTailSide.value,
+                    tailBaseAlignment: bubbleTailAlignment.value,
+                    tailBaseWidth: parseInt(bubbleTailBaseWidth.value) || 10,
+                    paddingX: parseInt(bubblePaddingX.value) || 10,
+                    paddingY: parseInt(bubblePaddingY.value) || 10,
+                    cornerRadius: parseInt(bubbleCornerRadius.value) || 10,
                     flipText: bubbleFlipText.checked
                 });
+                
+                // Save the state after applying changes
+                saveState();
+                
+                // Update UI
                 drawCanvas();
+                showPointer('applyBubbleBtn', 'Bubble Updated!');
+                bubbleEditorModal.classList.add('hidden');
             }
-            bubbleEditorModal.classList.add('hidden');
         });
 
         cancelBubbleBtn.addEventListener('click', () => {
@@ -3163,6 +3537,8 @@
                     paddingY: arrowPaddingY.value,
                     flipText: arrowFlipText.checked
                 });
+                saveState();
+                showPointer('applyArrowBtn', 'Arrow Updated!');
                 drawCanvas();
             }
             arrowEditorModal.classList.add('hidden');
