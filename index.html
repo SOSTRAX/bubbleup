@@ -1504,12 +1504,70 @@
                 this.flipText = flipText;
             }
 
-            // Recalculate bounding box based on x1, y1, x2, y2
+            // Recalculate bounding box based on x1, y1, x2, y2 and text label
             updateBoundingBox() {
-                this.x = Math.min(this.x1, this.x2);
-                this.y = Math.min(this.y1, this.y2);
-                this.width = Math.abs(this.x2 - this.x1);
-                this.height = Math.abs(this.y2 - this.y1);
+                // Calculate arrow line bounding box
+                const minX = Math.min(this.x1, this.x2);
+                const minY = Math.min(this.y1, this.y2);
+                const maxX = Math.max(this.x1, this.x2);
+                const maxY = Math.max(this.y1, this.y2);
+                
+                // Add arrow head size to bounding box
+                const headSize = this.headSize;
+                const arrowAngle = Math.atan2(this.y2 - this.y1, this.x2 - this.x1);
+                const headXOffset = headSize * Math.cos(arrowAngle);
+                const headYOffset = headSize * Math.sin(arrowAngle);
+                
+                // Add text label bounding box
+                ctx.font = `${this.fontSize}px ${this.fontFamily}`;
+                const textMetrics = ctx.measureText(this.text);
+                const textWidth = textMetrics.width;
+                const textHeight = this.fontSize * 1.2;
+                const textX = (this.x1 + this.x2) / 2;
+                const textY = (this.y1 + this.y2) / 2;
+                
+                // Calculate text background with padding
+                const bgPaddingX = this.paddingX * 1.5;
+                const bgPaddingY = this.paddingY * 1.5;
+                const bgWidth = textWidth + 2 * bgPaddingX;
+                const bgHeight = textHeight + 2 * bgPaddingY;
+                
+                // Get text background corners
+                const textBgCorners = [
+                    { x: textX - bgWidth/2, y: textY - bgHeight/2 },
+                    { x: textX + bgWidth/2, y: textY - bgHeight/2 },
+                    { x: textX + bgWidth/2, y: textY + bgHeight/2 },
+                    { x: textX - bgWidth/2, y: textY + bgHeight/2 }
+                ];
+                
+                // Transform text background corners to arrow's coordinate system
+                const arrowAngleRad = Math.atan2(this.y2 - this.y1, this.x2 - this.x1);
+                const cosAngle = Math.cos(arrowAngleRad);
+                const sinAngle = Math.sin(arrowAngleRad);
+                
+                const transformedCorners = textBgCorners.map(corner => ({
+                    x: corner.x * cosAngle - corner.y * sinAngle,
+                    y: corner.x * sinAngle + corner.y * cosAngle
+                }));
+                
+                // Find min/max of transformed corners
+                let textMinX = Infinity;
+                let textMinY = Infinity;
+                let textMaxX = -Infinity;
+                let textMaxY = -Infinity;
+                
+                transformedCorners.forEach(corner => {
+                    textMinX = Math.min(textMinX, corner.x);
+                    textMinY = Math.min(textMinY, corner.y);
+                    textMaxX = Math.max(textMaxX, corner.x);
+                    textMaxY = Math.max(textMaxY, corner.y);
+                });
+                
+                // Update bounding box to include both arrow and text
+                this.x = Math.min(minX, textMinX);
+                this.y = Math.min(minY, textMinY);
+                this.width = Math.max(maxX - minX, textMaxX - textMinX);
+                this.height = Math.max(maxY - minY, textMaxY - textMinY);
             }
 
             // Track which handle is being dragged
@@ -2027,8 +2085,35 @@
                     shapes.push(selectedShape);
                 } else if (drawingMode === 'arrow') {
                     console.log('   Creating new Arrow.');
-                    selectedShape = new Arrow(x, y, x + 100, y + 0); // Default horizontal arrow
+                    // Calculate arrow endpoints to stay within canvas bounds
+                    const arrowLength = 100;
+                    const arrowAngle = 0; // Horizontal arrow
+                    
+                    // Calculate initial position with margin from edges
+                    const startX = Math.max(10, Math.min(x, canvas.width - arrowLength - 10));
+                    const startY = Math.max(10, Math.min(y, canvas.height - 10));
+                    const endX = startX + arrowLength;
+                    
+                    // Create arrow with calculated endpoints
+                    selectedShape = new Arrow(startX, startY, endX, startY);
                     shapes.push(selectedShape);
+                    
+                    // Ensure arrow stays visible by adjusting position if needed
+                    if (endX > canvas.width - 10) {
+                        // If arrow would extend beyond right edge, move it left
+                        const dx = endX - (canvas.width - 10);
+                        selectedShape.x1 -= dx;
+                        selectedShape.x2 -= dx;
+                    }
+                    if (startX < 10) {
+                        // If arrow starts too close to left edge, move it right
+                        const dx = 10 - startX;
+                        selectedShape.x1 += dx;
+                        selectedShape.x2 += dx;
+                    }
+                    
+                    // Update bounding box immediately
+                    selectedShape.updateBoundingBox();
                 }
                 isResizing = true; // Use resizing flag for initial draw
                 resizeHandle = 'br'; // Treat as bottom-right resize for bubbles, 'end' for arrows
@@ -2560,11 +2645,52 @@
 
                 const canvasState = {
                     image: uploadedImage ? uploadedImage.src : null,
-                    shapes: shapes.map(shape => {
-                        const shapeData = { type: shape.constructor.name, properties: {} };
-                        Object.assign(shapeData.properties, shape);
-                        return shapeData;
-                    }),
+                    shapes: shapes.map(shape => ({
+                        type: shape.constructor.name,
+                        properties: {
+                            x: shape.x,
+                            y: shape.y,
+                            width: shape.width,
+                            height: shape.height,
+                            rotation: shape.rotation,
+                            fillColor: shape.fillColor,
+                            fillTransparency: shape.fillTransparency,
+                            borderColor: shape.borderColor,
+                            borderTransparency: shape.borderTransparency,
+                            borderWidth: shape.borderWidth,
+                            ...(shape instanceof SpeechBubble && {
+                                text: shape.text,
+                                fontSize: shape.fontSize,
+                                fontFamily: shape.fontFamily,
+                                textColor: shape.textColor,
+                                tailX: shape.tailX,
+                                tailY: shape.tailY,
+                                tailBaseSide: shape.tailBaseSide,
+                                tailBaseAlignment: shape.tailBaseAlignment,
+                                paddingX: shape.paddingX,
+                                paddingY: shape.paddingY,
+                                cornerRadius: shape.cornerRadius,
+                                flipText: shape.flipText,
+                                tailBaseWidth: shape.tailBaseWidth
+                            }),
+                            ...(shape instanceof Arrow && {
+                                x1: shape.x1,
+                                y1: shape.y1,
+                                x2: shape.x2,
+                                y2: shape.y2,
+                                text: shape.text,
+                                fontSize: shape.fontSize,
+                                fontFamily: shape.fontFamily,
+                                textColor: shape.textColor,
+                                textBackgroundColor: shape.textBackgroundColor,
+                                lineWidth: shape.lineWidth,
+                                headSize: shape.headSize,
+                                paddingX: shape.paddingX,
+                                paddingY: shape.paddingY,
+                                flipText: shape.flipText
+                            })
+                        }
+                    })),
                     zoom: currentZoom,
                     panX: panX,
                     panY: panY
@@ -2603,7 +2729,8 @@
                             console.error('Shape class not found:', shapeData.type);
                             return null;
                         }
-                        const shape = new ShapeClass(shapeData.properties);
+                        const shape = new ShapeClass();
+                        Object.assign(shape, shapeData.properties);
                         return shape;
                     }).filter(shape => shape !== null));
                 }
