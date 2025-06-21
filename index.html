@@ -111,7 +111,7 @@
             overflow: hidden; /* Prevent body scroll */
         }
         .sidebar {
-            width: 16rem; /* Reduced from 20rem */
+            width: 10rem; /* Reduced from 20rem */
             background-color: white;
             padding: 0.5rem; /* Reduced from 0.75rem */
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
@@ -315,7 +315,7 @@
                 <button id="howToBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-1.5 px-3 text-sm rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
                     <i class="fas fa-info-circle mr-1.5 text-sm"></i>How To Use
                 </button>
-                <div class="text-center text-lg text-blue-600 mt-3 font-bold">Double Click New Objects To Edit Properties</div>
+
 
                 <!-- Quick Action Buttons -->
                 <div class="flex justify-center gap-2 mb-4" style="display: none;">
@@ -2496,54 +2496,88 @@
          * @param {number} mouseX - Mouse X coordinate relative to canvas.
          * @param {number} mouseY - Mouse Y coordinate relative to canvas.
          */
-         function updateCursor(mouseX, mouseY) {
-            // Check for handles
-            if (selectedShape) {
-                // Check for tail handle
-                if (selectedShape instanceof SpeechBubble && selectedShape.onTailHandle(mouseX, mouseY)) {
-                    canvas.style.cursor = 'pointer'; // Hand/finger cursor
-                    return;
-                }
-                
-                // Check for resize handle
-                if (selectedShape.onResizeHandle(mouseX, mouseY) === 'resize') {
-                    canvas.style.cursor = 'se-resize'; // Double arrow cursor
-                    return;
-                }
-                
-                // Check for rotation handle
-                if (isCtrlPressed && selectedShape instanceof SpeechBubble) {
-                    const rotationHandle = selectedShape.onRotationHandle(mouseX, mouseY);
-                    if (rotationHandle) {
-                        canvas.style.cursor = 'grab'; // Grab cursor
-                        return;
-                    }
-                }
-            }
-    
-            if (isDragging || isResizing || isRotating || isTailMoving || drawingMode) {
-                canvas.style.cursor = 'grabbing'; // Or specific resize/rotation cursors
-                return;
+        function updateCursor(mouseX, mouseY) {
+            const bubble = shapes.find(b => b instanceof SpeechBubble && b.contains(mouseX, mouseY));
+            const arrow = shapes.find(a => a instanceof Arrow && a.contains(mouseX, mouseY));
+            const handle = bubble?.onResizeHandle(mouseX, mouseY);
+            const tailHandle = bubble?.onTailHandle(mouseX, mouseY);
+            const rotationHandle = bubble?.onRotationHandle(mouseX, mouseY);
+            const plusSymbol = bubble?.onPlusSymbol(mouseX, mouseY);
+            const arrowHandle = arrow?.onResizeHandle(mouseX, mouseY);
+            const arrowRotationHandle = arrow?.onRotationHandle(mouseX, mouseY);
+
+            // Remove any existing tooltips
+            const existingTooltip = document.getElementById('elementTooltip');
+            if (existingTooltip) {
+                existingTooltip.remove();
             }
 
-            let hovered = false;
-            let newCursor = 'grab'; // Default for interaction
-
-            // Check if hovering over any shape for dragging
-            for (let i = shapes.length - 1; i >= 0; i--) {
-                const shape = shapes[i];
-                if (shape.contains(mouseX, mouseY)) {
-                    newCursor = 'grab';
-                    hovered = true;
-                    // Check for handles only if it's the selected shape
-                    if (shape === selectedShape) {
-                        // The handle checking is already handled above
-                    }
-                }
-            }
-            
-            if (hovered) {
-                canvas.style.cursor = newCursor;
+            // Create tooltip for speech bubble
+            if (bubble && !handle && !tailHandle && !rotationHandle && !plusSymbol) {
+                canvas.style.cursor = 'pointer';
+                const tooltip = document.createElement('div');
+                tooltip.id = 'elementTooltip';
+                tooltip.className = 'absolute bg-gray-800 text-white px-3 py-2 rounded-lg text-sm font-medium z-50 shadow-lg';
+                tooltip.textContent = 'Double-click to edit bubble';
+                // Get canvas container position relative to viewport
+                const containerRect = canvasContainer.getBoundingClientRect();
+                
+                // Get bubble center position
+                const bubbleCenter = bubble.getCenter();
+                
+                // Calculate tooltip position accounting for canvas transformations
+                const tooltipX = containerRect.left + bubbleCenter.x * currentZoom + panX;
+                const tooltipY = containerRect.top + bubbleCenter.y * currentZoom + panY;
+                
+                // Add debugging info
+                console.log('Bubble center:', bubbleCenter);
+                console.log('Tooltip position:', { x: tooltipX, y: tooltipY });
+                
+                // Ensure tooltip appears above the bubble
+                tooltip.style.left = `${tooltipX}px`;
+                tooltip.style.top = `${tooltipY}px`;
+                tooltip.style.transform = 'translate(-50%, -100%)';
+                tooltip.style.zIndex = '9999'; // Ensure it appears above everything
+                tooltip.style.position = 'fixed'; // Use fixed positioning to ensure it stays in viewport
+                tooltip.style.transition = 'all 0.2s ease-in-out';
+                tooltip.style.opacity = '0';
+                tooltip.style.pointerEvents = 'none';
+                
+                // Add a fade-in animation
+                setTimeout(() => {
+                    tooltip.style.opacity = '1';
+                }, 100);
+                document.body.appendChild(tooltip);
+            } else if (handle) {
+                canvas.style.cursor = 'nwse-resize';
+            } else if (tailHandle) {
+                canvas.style.cursor = 'move';
+            } else if (rotationHandle) {
+                canvas.style.cursor = 'grab';
+            } else if (plusSymbol) {
+                canvas.style.cursor = 'crosshair';
+            } else if (arrow && !arrowHandle && !arrowRotationHandle) {
+                canvas.style.cursor = 'pointer';
+                const tooltip = document.createElement('div');
+                tooltip.id = 'elementTooltip';
+                tooltip.className = 'absolute bg-gray-800 text-white px-3 py-2 rounded-lg text-sm font-medium z-50 shadow-lg';
+                tooltip.textContent = 'Double-click to edit arrow';
+                tooltip.style.left = `${mouseX + 50}px`;
+                tooltip.style.top = `${mouseY + 50}px`;
+                tooltip.style.transform = 'translate(-50%, -100%)';
+                tooltip.style.transition = 'all 0.2s ease-in-out';
+                tooltip.style.opacity = '0';
+                tooltip.style.pointerEvents = 'none';
+                
+                // Add a fade-in animation
+                setTimeout(() => {
+                    tooltip.style.opacity = '1';
+                }, 100);
+                document.body.appendChild(tooltip);
+            } else if (arrowHandle) {
+                canvas.style.cursor = 'move';
+            } else if (arrowRotationHandle) {
+                canvas.style.cursor = 'grab';
             } else {
                 canvas.style.cursor = 'default';
             }
