@@ -1924,6 +1924,12 @@
 
         // Show pointer animation
         function showPointer(buttonId, text) {
+            // Remove any existing pointer first
+            const existingPointer = document.querySelector('.pointer-overlay');
+            if (existingPointer) {
+                existingPointer.remove();
+            }
+
             const button = document.getElementById(buttonId);
             if (!button) return;
 
@@ -1932,10 +1938,17 @@
             pointer.className = 'pointer-overlay absolute';
             pointer.style.display = 'block';
             
-            // Position it relative to the button
+            // Position it centered above the button
             const rect = button.getBoundingClientRect();
-            pointer.style.left = `${rect.left + window.scrollX}px`;
-            pointer.style.top = `${rect.top + window.scrollY}px`;
+            const pointerRect = pointer.querySelector('.pointer-pointer').getBoundingClientRect();
+            
+            // Calculate horizontal center
+            const left = rect.left + (rect.width / 2) - (pointerRect.width / 2);
+            // Position above the button with some offset
+            const top = rect.top - (pointerRect.height + 20);
+            
+            pointer.style.left = `${left + window.scrollX}px`;
+            pointer.style.top = `${top + window.scrollY}px`;
             
             // Add pointer and text elements
             const pointerDiv = document.createElement('div');
@@ -1951,10 +1964,17 @@
             // Add to body
             document.body.appendChild(pointer);
             
-            // Remove after 2 seconds
-            setTimeout(() => {
+            // Remove after 3 seconds
+            const timeoutId = setTimeout(() => {
                 pointer.remove();
-            }, 2000);
+            }, 3000);
+
+            // Store the timeout ID if it's a bubble or arrow pointer
+            if (buttonId === 'bubbleBtn') {
+                bubblePointerTimeout = timeoutId;
+            } else if (buttonId === 'arrowBtn') {
+                arrowPointerTimeout = timeoutId;
+            }
         }
 
         // Hide pointer when clicking on canvas
@@ -2519,6 +2539,15 @@
                 tooltip.id = 'elementTooltip';
                 tooltip.className = 'absolute bg-gray-800 text-white px-3 py-2 rounded-lg text-sm font-medium z-50 shadow-lg';
                 tooltip.textContent = 'Double-click to edit bubble';
+                
+                // Add timeout to remove tooltip after 3 seconds
+                tooltip.style.transitionDuration = '0.2s';
+                setTimeout(() => {
+                    tooltip.style.opacity = '0';
+                    setTimeout(() => {
+                        tooltip.remove();
+                    }, 200); // Remove after fade-out animation
+                }, 1500);
                 // Get canvas container position relative to viewport
                 const containerRect = canvasContainer.getBoundingClientRect();
                 
@@ -2562,6 +2591,15 @@
                 tooltip.id = 'elementTooltip';
                 tooltip.className = 'absolute bg-gray-800 text-white px-3 py-2 rounded-lg text-sm font-medium z-50 shadow-lg';
                 tooltip.textContent = 'Double-click to edit arrow';
+                
+                // Add timeout to remove tooltip after 1.5 seconds
+                tooltip.style.transitionDuration = '0.2s';
+                setTimeout(() => {
+                    tooltip.style.opacity = '0';
+                    setTimeout(() => {
+                        tooltip.remove();
+                    }, 200); // Remove after fade-out animation
+                }, 1500);
                 tooltip.style.left = `${mouseX + 50}px`;
                 tooltip.style.top = `${mouseY + 50}px`;
                 tooltip.style.transform = 'translate(-50%, -100%)';
@@ -2587,6 +2625,12 @@
 
         // Show pointer animation
         function showPointer(buttonId, text) {
+            // Remove any existing pointer first
+            const existingPointer = document.querySelector('.pointer-overlay');
+            if (existingPointer) {
+                existingPointer.remove();
+            }
+
             const button = document.getElementById(buttonId);
             if (!button) return;
 
@@ -2599,15 +2643,22 @@
             `;
             document.body.appendChild(pointer);
 
-            // Position pointer relative to button
+            // Position pointer centered above the button
             const rect = button.getBoundingClientRect();
-            pointer.style.left = `${rect.left + rect.width / 2}px`;
-            pointer.style.top = `${rect.top - 100}px`;
+            const pointerRect = pointer.querySelector('.pointer-pointer').getBoundingClientRect();
+            
+            // Calculate horizontal center
+            const left = rect.left + (rect.width / 2) - (pointerRect.width / 2);
+            // Position above the button with some offset
+            const top = rect.top - (pointerRect.height + 20);
 
-            // Remove pointer after 2 seconds
+            pointer.style.left = `${left}px`;
+            pointer.style.top = `${top}px`;
+
+            // Remove pointer after 3 seconds
             setTimeout(() => {
                 pointer.remove();
-            }, 2000);
+            }, 3000);
         }
 
         canvas.addEventListener('dblclick', handleDoubleClick);
@@ -3067,7 +3118,8 @@ function undo() {
         currentHistoryIndex--;
         const state = history[currentHistoryIndex];
         restoreState(state);
-        showPointer('undoBtn', 'Undo successful!');
+        // Update the canvas immediately without pointer animation
+        drawCanvas();
     } else {
         console.log('No more undos available');
     }
@@ -3079,7 +3131,8 @@ function redo() {
         currentHistoryIndex++;
         const state = history[currentHistoryIndex];
         restoreState(state);
-        showPointer('redoBtn', 'Redo successful!');
+        // Update the canvas immediately without pointer animation
+        drawCanvas();
     } else {
         console.log('No more redos available');
     }
