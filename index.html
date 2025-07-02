@@ -1,9 +1,18 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Canvas Image Editor</title>
+    <style>
+        .title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #6366f1;
+            margin: 1rem 0;
+        }
+    </style>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome for icons -->
@@ -16,53 +25,52 @@
             transition: opacity 0.3s ease-in-out; /* Smooth fade-in */
         }
 
-        /* Pointer animation styles */
+        /* Pointer styles */
         .pointer-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
+            top: -100px; /* Adjusted to match header height (p-4 adds 1rem padding = 16px) */
+            left: 50%;
+            transform: translateX(-50%);
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 1000;
+            z-index: 1001;
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
-        .pointer-pointer {
-            width: 100px;
-            height: 100px;
-            position: absolute;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 50%;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            animation: pointerPulse 1.5s infinite;
+        .pointer-text {
+            font-size: 1.25rem;
+            color: #6366f1;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1002;
         }
 
-        .pointer-pointer::before {
-            content: '';
-            width: 30px;
-            height: 50px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            border-left: 5px solid #6366f1;
-            border-right: 5px solid #6366f1;
-            border-top: 5px solid transparent;
-            border-bottom: 5px solid transparent;
-            border-radius: 10px / 5px;
-            animation: hourglass 1s ease-in-out infinite;
+        .pointer-text {
+            font-size: 1.25rem;
+            color: #6366f1;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 1002;
         }
 
-        @keyframes hourglass {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            50% { transform: translate(-50%, -50%) rotate(180deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        .pointer-text {
+            font-size: 1.25rem;
+            color: #6366f1;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .pointer-text {
@@ -110,7 +118,7 @@
             height: 100vh;
             overflow: hidden; /* Prevent body scroll */
         }
-        .sidebar {
+        .topcontrols {
             width: 10rem; /* Reduced from 20rem */
             background-color: white;
             padding: 0.5rem; /* Reduced from 0.75rem */
@@ -159,6 +167,17 @@
         }
         .form-group {
             margin-bottom: 0.25rem;
+        }
+
+        /* Title styles */
+        .title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin: 0;
+            position: relative;
+            z-index: 1;
+            padding: 0.5rem 0;
         }
         .form-group label {
             font-weight: 600;
@@ -231,18 +250,21 @@
           <p><strong>Author:</strong> Michael Dietz</p>
           <p>This project is a simple HTML page created to demonstrate the flexibility of the CANVAS.</p>
           <p><strong>License:</strong> MIT License — free to use with attribution. See https://opensource.org/licenses/MIT</p>
-          <p>If you’re interested in working together or want to know more, feel free to contact me: mike@sostrax.com</p>
+          <p>If you're interested in working together or want to know more, feel free to contact me: mike@sostrax.com</p>
           <p>View this project on GitHub: https://github.com/SOSTRAX/bubbleup</p>
         </section>
       </div>
-  
-      <!-- Main Header -->
-      <header class="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white shadow-lg z-10">
-          <h1 class="text-3xl font-bold text-center">BubbleUp</h1>
-      </header>
+    <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg z-10 relative">
+        <div class="p-4">
+            <h1 class="title">BubbleUp</h1>
+        </div>
+        <div id="bubblePointer" class="pointer-overlay hidden">
+            <div class="pointer-text">Drag to create</div>
+        </div>
+    </header>
         <div class="container">
             <!-- Left Sidebar -->
-            <div class="sidebar">
+            <div class="topcontrols">
                 <!-- File Menu Dropdown -->
                 <div class="relative" id="fileMenuContainer">
                     <button id="fileMenuBtn" class="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out flex items-center justify-center">
@@ -257,6 +279,8 @@
                             <div class="border-t border-gray-200 my-1"></div>
                             <a href="#" id="saveImageBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-save mr-2"></i>Save as Image (.png)</a>
                             <a href="#" id="saveClipBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem"><i class="fas fa-video mr-2"></i>Save as Clip (.webm)</a>
+                            <div class="border-t border-gray-200 my-1"></div>
+                            <a href="#" id="clearCanvasBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-red-500 hover:text-red-600" role="menuitem"><i class="fas fa-trash-alt mr-2"></i>Clear Canvas</a>
                         </div>
                     </div>
                 </div>
@@ -281,36 +305,40 @@
                     <div class="pointer-pointer"></div>
                     <div class="pointer-text">Load Canvas</div>
                 </div>
-
-
-                <!-- Feature Buttons -->
-                <button id="uploadImageBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                    <i class="fas fa-upload mr-2"></i>Choose Image
-                </button>
                 <input type="file" id="imageInput" accept="image/*" class="hidden">
-                <div id="fileNameDisplay" class="text-center text-sm text-blue-600 mt-2 font-medium bg-white px-3 py-1 rounded-full shadow-sm w-full"></div>
+                <div id="fileNameDisplay" class="text-center text-sm text-blue-600 mt-2 font-medium bg-white px-3 py-1 rounded-full shadow-sm w-full hidden"></div>
 
-                <button id="createBubbleBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                    <i class="fas fa-comment-dots mr-2"></i>Create Speech Bubble
-                </button>
+                <!-- Create Menu Dropdown -->
+                <div class="relative" id="createMenuContainer">
+                    <button id="createMenuBtn" class="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out flex items-center justify-center">
+                        <i class="fas fa-plus mr-2"></i>
+                        <span>Add</span>
+                        <i class="fas fa-chevron-down ml-auto pl-2"></i>
+                    </button>
+                    <div id="createMenuDropdown" class="absolute left-0 mt-2 w-full rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-20">
+                        <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="createMenuBtn">
+                            <button id="chooseImageBtn" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                <i class="fas fa-image mr-2"></i>Image
+                            </button>
+                            <button id="createBubbleBtn" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                <i class="fas fa-comment-dots mr-2"></i>Bubble
+                            </button>
+                            <button id="createArrowBtn" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onclick="drawingMode = 'arrow'; showPointer('createArrowBtn', 'Drag to create arrow');">
+                                <i class="fas fa-arrow-right mr-2"></i>Arrow
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pointer Elements -->
                 <div id="bubblePointer" class="pointer-overlay hidden">
                     <div class="pointer-pointer"></div>
                     <div class="pointer-text">Drag To Place Bubble</div>
                 </div>
-
-                <button id="createArrowBtn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                    <i class="fas fa-arrow-right mr-2"></i>Create Stretchable Arrow
-                </button>
                 <div id="arrowPointer" class="pointer-overlay hidden">
                     <div class="pointer-pointer"></div>
                     <div class="pointer-text">Drag To Make Arrow</div>
                 </div>
-
-
-
-                <button id="clearCanvasBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-3 text-sm rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
-                    <i class="fas fa-trash-alt mr-1.5 text-sm"></i>Clear Canvas
-                </button>
 
                 <button id="howToBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-1.5 px-3 text-sm rounded-lg shadow-md transition duration-200 ease-in-out transform hover:scale-105">
                     <i class="fas fa-info-circle mr-1.5 text-sm"></i>How To Use
@@ -355,9 +383,9 @@
             <div class="modal-content">
                 <h2 class="text-xs font-bold mb-1 text-gray-800">Edit Speech Bubble</h2>
                 <form id="bubbleForm" class="grid grid-cols-3 gap-x-1 gap-y-1">
-                    <div class="form-group">
+                    <div class="form-group col-span-3">
                         <label for="bubbleText" class="text-xs">Text String:</label>
-                        <input type="text" id="bubbleText" class="w-full text-xs h-6">
+                        <textarea id="bubbleText" class="w-full text-xs h-6 resize-none border border-black" rows="2"></textarea>
                     </div>
                     <div class="form-group">
                         <label for="bubbleFontSize" class="text-xs">Font Size:</label>
@@ -489,9 +517,9 @@
             <div class="modal-content">
                 <h2 class="text-xs font-bold mb-2 text-gray-800">Edit Stretchable Arrow</h2>
                 <form id="arrowForm" class="grid grid-cols-3 gap-x-1 gap-y-1">
-                    <div class="form-group">
+                    <div class="form-group col-span-3">
                         <label for="arrowText" class="text-xs">Text String:</label>
-                        <input type="text" id="arrowText" class="w-full text-xs h-6">
+                        <textarea id="arrowText" class="w-full text-xs h-6 resize-none border border-black" rows="2"></textarea>
                     </div>
                     <div class="form-group">
                         <label for="arrowFontSize" class="text-xs">Font Size:</label>
@@ -623,8 +651,21 @@
 
     <script>
         // Global variables
+        let debugMessages = false
         let isCtrlPressed = false;
         let uploadedImage = null; // Store the uploaded image
+        const imageInput = document.getElementById('imageInput');
+        let isProcessingFile = false;
+
+        // Initialize menu elements
+        const createMenuBtn = document.getElementById('createMenuBtn');
+        const createMenuDropdown = document.getElementById('createMenuDropdown');
+        const createBubbleBtn = document.getElementById('createBubbleBtn');
+        const createArrowBtn = document.getElementById('createArrowBtn');
+        const chooseImageBtn = document.getElementById('chooseImageBtn');
+
+        // Initialize the menu state
+        createMenuDropdown.classList.add('hidden');
 
         // Get canvas and container elements
         const canvas = document.getElementById('myCanvas');
@@ -653,9 +694,6 @@
 
         // --- UI Elements ---
         const uploadImageBtn = document.getElementById('uploadImageBtn');
-        const imageInput = document.getElementById('imageInput');
-        const createBubbleBtn = document.getElementById('createBubbleBtn');
-        const createArrowBtn = document.getElementById('createArrowBtn');
         const saveImageBtn = document.getElementById('saveImageBtn');
         const saveClipBtn = document.getElementById('saveClipBtn');
         const clearCanvasBtn = document.getElementById('clearCanvasBtn');
@@ -695,6 +733,11 @@
         const arrowEditorModal = document.getElementById('arrowEditorModal');
         const arrowForm = document.getElementById('arrowForm');
         const arrowText = document.getElementById('arrowText');
+        // Make arrow text input resizable
+        arrowText.style.resize = 'both';
+        arrowText.style.minHeight = '50px';
+        arrowText.style.minWidth = '200px';
+        arrowText.style.overflow = 'auto';
         const arrowFontSize = document.getElementById('arrowFontSize');
         const arrowFontFamily = document.getElementById('arrowFontFamily');
         const arrowRotation = document.getElementById('arrowRotation');
@@ -995,7 +1038,7 @@
              * This function should be called when the tailBaseSide or tailBaseAlignment changes.
              */
             updateTailTipPosition() {
-                console.log('Updating tail position for side:', this.tailBaseSide);
+                if (debugMessages) console.log('Updating tail position for side:', this.tailBaseSide);
                 const bodyX = this.x;
                 const bodyY = this.y;
                 const bodyWidth = this.width;
@@ -1016,7 +1059,7 @@
                         }
                         this.tailX = basePointX;
                         this.tailY = basePointY + tailLength;
-                        console.log('New tail position (bottom):', this.tailX, this.tailY);
+                        if (debugMessages) console.log('New tail position (bottom):', this.tailX, this.tailY);
                         break;
                     case 'top':
                         basePointY = this.y;
@@ -1029,7 +1072,7 @@
                         }
                         this.tailX = basePointX;
                         this.tailY = basePointY - tailLength;
-                        console.log('New tail position (top):', this.tailX, this.tailY);
+                        if (debugMessages) console.log('New tail position (top):', this.tailX, this.tailY);
                         break;
                     case 'left':
                         basePointX = this.x;
@@ -1042,7 +1085,7 @@
                         }
                         this.tailX = basePointX - tailLength;
                         this.tailY = basePointY;
-                        console.log('New tail position (left):', this.tailX, this.tailY);
+                        if (debugMessages) console.log('New tail position (left):', this.tailX, this.tailY);
                         break;
                     case 'right':
                         basePointX = this.x + this.width;
@@ -1055,7 +1098,7 @@
                         }
                         this.tailX = basePointX + tailLength;
                         this.tailY = basePointY;
-                        console.log('New tail position (right):', this.tailX, this.tailY);
+                        if (debugMessages) console.log('New tail position (right):', this.tailX, this.tailY);
                         break;
                 }
             }
@@ -1527,63 +1570,79 @@
                 const minY = Math.min(this.y1, this.y2);
                 const maxX = Math.max(this.x1, this.x2);
                 const maxY = Math.max(this.y1, this.y2);
-                
-                // Add arrow head size to bounding box
-                const headSize = this.headSize;
-                const arrowAngle = Math.atan2(this.y2 - this.y1, this.x2 - this.x1);
-                const headXOffset = headSize * Math.cos(arrowAngle);
-                const headYOffset = headSize * Math.sin(arrowAngle);
-                
+
                 // Add text label bounding box
                 ctx.font = `${this.fontSize}px ${this.fontFamily}`;
                 const textMetrics = ctx.measureText(this.text);
                 const textWidth = textMetrics.width;
-                const textHeight = this.fontSize * 1.2;
-                const textX = (this.x1 + this.x2) / 2;
-                const textY = (this.y1 + this.y2) / 2;
-                
-                // Calculate text background with padding
+                const textHeight = this.fontSize * 1.2; // Approximate text height with line height
+
+                // Calculate background dimensions with padding
                 const bgPaddingX = this.paddingX * 1.5;
                 const bgPaddingY = this.paddingY * 1.5;
                 const bgWidth = textWidth + 2 * bgPaddingX;
                 const bgHeight = textHeight + 2 * bgPaddingY;
-                
-                // Get text background corners
-                const textBgCorners = [
-                    { x: textX - bgWidth/2, y: textY - bgHeight/2 },
-                    { x: textX + bgWidth/2, y: textY - bgHeight/2 },
-                    { x: textX + bgWidth/2, y: textY + bgHeight/2 },
-                    { x: textX - bgWidth/2, y: textY + bgHeight/2 }
+
+                // Text center in arrow's coordinate system
+                const textXCenter = (this.x1 + this.x2) / 2;
+                const textYCenter = (this.y1 + this.y2) / 2;
+
+                // Calculate text background corners relative to its own center (0,0)
+                const textBgCornersRelative = [
+                    { x: -bgWidth / 2, y: -bgHeight / 2 },
+                    { x: bgWidth / 2, y: -bgHeight / 2 },
+                    { x: bgWidth / 2, y: bgHeight / 2 },
+                    { x: -bgWidth / 2, y: bgHeight / 2 }
                 ];
-                
-                // Transform text background corners to arrow's coordinate system
-                const arrowAngleRad = Math.atan2(this.y2 - this.y1, this.x2 - this.x1);
-                const cosAngle = Math.cos(arrowAngleRad);
-                const sinAngle = Math.sin(arrowAngleRad);
-                
-                const transformedCorners = textBgCorners.map(corner => ({
-                    x: corner.x * cosAngle - corner.y * sinAngle,
-                    y: corner.x * sinAngle + corner.y * cosAngle
+
+                let effectiveTextRotationAngle = Math.atan2(this.y2 - this.y1, this.x2 - this.x1); // arrowAngle
+
+                // Step 1: Ensure text is generally readable (not upside down) relative to the viewer
+                // Normalize angle to be between -PI and PI for consistent check
+                let normalizedArrowAngleForBB = effectiveTextRotationAngle;
+                if (normalizedArrowAngleForBB > Math.PI) {
+                    normalizedArrowAngleForBB -= 2 * Math.PI;
+                } else if (normalizedArrowAngleForBB < -Math.PI) {
+                    normalizedArrowAngleForBB += 2 * Math.PI;
+                }
+
+                // If the arrow points generally left (angle between 90 and 270 degrees)
+                if (Math.abs(normalizedArrowAngleForBB) > Math.PI / 2) {
+                    effectiveTextRotationAngle += Math.PI;
+                }
+
+                // Step 2: Apply the user-requested flip if drawing from lower
+                if (this.flipText) {
+                    effectiveTextRotationAngle += Math.PI; // Add another 180 degrees
+                }
+
+                const cosAngle = Math.cos(effectiveTextRotationAngle);
+                const sinAngle = Math.sin(effectiveTextRotationAngle);
+
+                // Transform text background corners from text's local (0,0) to canvas coordinates
+                const transformedCorners = textBgCornersRelative.map(corner => ({
+                    x: (corner.x * cosAngle - corner.y * sinAngle) + textXCenter,
+                    y: (corner.x * sinAngle + corner.y * cosAngle) + textYCenter
                 }));
-                
-                // Find min/max of transformed corners
+
+                // Find min/max of transformed corners to get text's bounding box
                 let textMinX = Infinity;
                 let textMinY = Infinity;
                 let textMaxX = -Infinity;
                 let textMaxY = -Infinity;
-                
+
                 transformedCorners.forEach(corner => {
                     textMinX = Math.min(textMinX, corner.x);
                     textMinY = Math.min(textMinY, corner.y);
                     textMaxX = Math.max(textMaxX, corner.x);
                     textMaxY = Math.max(textMaxY, corner.y);
                 });
-                
-                // Update bounding box to include both arrow and text
+
+                // Update bounding box to include both arrow line and text
                 this.x = Math.min(minX, textMinX);
                 this.y = Math.min(minY, textMinY);
-                this.width = Math.max(maxX - minX, textMaxX - textMinX);
-                this.height = Math.max(maxY - minY, textMaxY - textMinY);
+                this.width = Math.max(maxX, textMaxX) - this.x;
+                this.height = Math.max(maxY, textMaxY) - this.y;
             }
 
             // Track which handle is being dragged
@@ -1640,18 +1699,25 @@
                 // Save context before transforming for text
                 ctx.save();
                 ctx.translate(textX, textY);
-                // Calculate the angle to make text always right-side up
-                let textAngle = arrowAngle;
-                
-                // If the arrow is pointing left (angle between 90 and 270 degrees), flip the text
-                if (arrowAngle > Math.PI/2 && arrowAngle < 3*Math.PI/2) {
-                    textAngle = arrowAngle - Math.PI;
+
+                let textRotationAngle = arrowAngle;
+
+                // Start with arrow angle as base rotation
+                textRotationAngle = arrowAngle;
+
+                // Only flip 180 degrees if arrow starts from right (x2 < x1)
+                if (this.x2 < this.x1) {
+                    textRotationAngle += Math.PI;
                 }
-                
-                ctx.rotate(textAngle); // Rotate to be parallel to the arrow line
-                if (this.flipText) {
-                    ctx.rotate(Math.PI); // Additional flip if requested
+
+                // Normalize final rotation to be between -PI and PI
+                if (textRotationAngle > Math.PI) {
+                    textRotationAngle -= 2 * Math.PI;
+                } else if (textRotationAngle < -Math.PI) {
+                    textRotationAngle += 2 * Math.PI;
                 }
+
+                ctx.rotate(textRotationAngle);
 
                 // Measure text to draw background in the rotated context
                 const textMetrics = ctx.measureText(this.text);
@@ -1663,16 +1729,16 @@
                 const bgPaddingY = this.paddingY * 1.5;
                 const bgWidth = textWidth + 2 * bgPaddingX;
                 const bgHeight = textHeight + 2 * bgPaddingY;
-                
+
                 // Position background centered at (0,0) in rotated context
                 const bgX = -bgWidth / 2;
                 const bgY = -bgHeight / 2;
-                
+
                 // Draw rounded background
                 ctx.fillStyle = this.textBackgroundColor;
                 const bgRadius = bgHeight / 2; // Make corners more rounded
                 roundRect(ctx, bgX, bgY, bgWidth, bgHeight, bgRadius);
-                
+
                 // Add subtle shadow to background
                 ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
                 ctx.shadowBlur = 5;
@@ -1701,17 +1767,11 @@
                     ctx.fillRect(this.x2 - halfHandle, this.y2 - halfHandle, handleSize, handleSize);
 
                     // Draw selection box around the entire arrow's bounding box
-                    // Calculate bounding box considering text label (using current unrotated bounding box for simplicity)
-                    const minX = Math.min(this.x1, this.x2, this.x);
-                    const minY = Math.min(this.y1, this.y2, this.y);
-                    const maxX = Math.max(this.x1, this.x2, this.x + this.width);
-                    const maxY = Math.max(this.y1, this.y2, this.y + this.height);
-
-
+                    // Calculated using the updatedBoundingBox method for accuracy
                     ctx.strokeStyle = '#00f';
                     ctx.lineWidth = 1;
                     ctx.setLineDash([5, 5]);
-                    ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+                    ctx.strokeRect(this.x, this.y, this.width, this.height);
                     ctx.setLineDash([]); // Reset line dash
 
                     ctx.restore();
@@ -1751,23 +1811,39 @@
                 // For rotated text background hit detection, draw a temporary rotated rect path
                 ctx.save();
                 ctx.translate(textX, textY);
-                ctx.rotate(Math.atan2(this.y2 - this.y1, this.x2 - this.x1)); // Rotate to arrow angle
-                if (this.flipText) {
-                    ctx.rotate(Math.PI);
+
+                let textRotationAngleForHitTest = Math.atan2(this.y2 - this.y1, this.x2 - this.x1); // arrowAngle
+
+                // Step 1: Ensure text is generally readable (not upside down) relative to the viewer
+                let normalizedArrowAngleForHitTest = textRotationAngleForHitTest;
+                if (normalizedArrowAngleForHitTest > Math.PI) {
+                    normalizedArrowAngleForHitTest -= 2 * Math.PI;
+                } else if (normalizedArrowAngleForHitTest < -Math.PI) {
+                    normalizedArrowAngleForHitTest += 2 * Math.PI;
                 }
-                
+
+                if (Math.abs(normalizedArrowAngleForHitTest) > Math.PI / 2) {
+                    textRotationAngleForHitTest += Math.PI;
+                }
+
+                // Step 2: Apply the user-requested flip if drawing from lower
+                if (this.flipText) {
+                    textRotationAngleForHitTest += Math.PI;
+                }
+                ctx.rotate(textRotationAngleForHitTest);
+
                 // Calculate background dimensions with padding
                 const bgPaddingX = this.paddingX * 1.5;
                 const bgPaddingY = this.paddingY * 1.5;
                 const bgWidth = textWidth + 2 * bgPaddingX;
                 const bgHeight = textHeight + 2 * bgPaddingY;
-                
+
                 // Position background centered at (0,0) in rotated context
                 const bgX = -bgWidth / 2;
                 const bgY = -bgHeight / 2;
-                
+
                 ctx.beginPath();
-                roundRect(ctx, bgX, bgY, bgWidth, bgHeight, bgHeight/2);
+                roundRect(ctx, bgX, bgY, bgWidth, bgHeight, bgHeight / 2);
                 const inTextBg = ctx.isPointInPath(mouseX, mouseY);
                 ctx.restore(); // Restore context
 
@@ -1805,7 +1881,7 @@
                 const dy1 = mouseY - this.y1;
                 const dx2 = mouseX - this.x2;
                 const dy2 = mouseY - this.y2;
-                
+
                 if (dx1 * dx1 + dy1 * dy1 <= hitRadius * hitRadius) {
                     this.startDragHandle = true;
                     return 'start';
@@ -1862,13 +1938,13 @@
                 this.updateBoundingBox(); // Update bounding box after point change
             }
 
-             /**
+            /**
              * Gets resize handles for the arrow (one at each end).
              * @returns {Array} Array of handle objects.
              */
             getHandles() {
                 const handleSize = 8;
-                
+
                 // Calculate handle positions at both ends
                 const handle1 = {
                     x: this.x1,
@@ -1891,7 +1967,7 @@
                     originalX: this.x2,
                     originalY: this.y2
                 };
-                
+
                 return [handle1, handle2];
             }
 
@@ -1921,6 +1997,14 @@
         // --- Pointer Animation Functions ---
         let bubblePointerTimeout;
         let arrowPointerTimeout;
+
+        // Hide pointer animation
+        function hidePointer() {
+            const headerPointer = document.querySelector('#bubblePointer');
+            if (headerPointer) {
+                headerPointer.classList.add('hidden');
+            }
+        }
 
         // Show pointer animation
         function showPointer(buttonId, text) {
@@ -1977,15 +2061,22 @@
             }
         }
 
-        // Hide pointer when clicking on canvas
-        canvas.addEventListener('click', () => {
-            const bubblePointer = document.getElementById('bubblePointer');
-            const arrowPointer = document.getElementById('arrowPointer');
-            bubblePointer.classList.add('hidden');
-            arrowPointer.classList.add('hidden');
-            clearTimeout(bubblePointerTimeout);
-            clearTimeout(arrowPointerTimeout);
+        // Wait for DOM to be fully loaded before setting up click handler
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('canvas');
+            if (canvas) {
+                canvas.addEventListener('click', () => {
+                    const bubblePointer = document.getElementById('bubblePointer');
+                    const arrowPointer = document.getElementById('arrowPointer');
+                    if (bubblePointer) bubblePointer.classList.add('hidden');
+                    if (arrowPointer) arrowPointer.classList.add('hidden');
+                    clearTimeout(bubblePointerTimeout);
+                    clearTimeout(arrowPointerTimeout);
+                });
+            }
         });
+
+
 
         // Initialize shape class registry after shape class definitions
         window.shapeClasses = {
@@ -2060,6 +2151,69 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
+        // Reset canvas state
+        function resetCanvas() {
+            // Reset zoom and pan
+            zoomLevel = 1;
+            panX = 0;
+            panY = 0;
+            
+            // Clear all shapes
+            shapes = [];
+            selectedShape = null;
+            
+            // Reset interaction states
+            isDragging = false;
+            isResizing = false;
+            isRotating = false;
+            resizeHandle = null;
+            rotationHandle = null;
+            isTailMoving = false;
+            
+            // Reset drawing mode
+            drawingMode = null;
+            
+            // Update UI
+            updateZoomLabel();
+            
+            // Redraw canvas
+            drawCanvas();
+        }
+
+        // Calculate zoom level needed to fit an image
+        function calculateFitZoom(img) {
+            // Calculate the scale to fit the image while maintaining aspect ratio
+            const scale = Math.min(
+                canvas.width / img.width,
+                canvas.height / img.height
+            );
+            
+            // Convert scale to zoom level (100% = 1, 200% = 2, etc.)
+            return scale * 100;
+        }
+
+        // Draw uploaded image on canvas
+        function drawImage(img) {
+            // Calculate zoom level needed to fit the image
+            const fitZoom = calculateFitZoom(img);
+            
+            // Set both zoom variables
+            zoomLevel = fitZoom / 100;
+            currentZoom = zoomLevel; // Also update currentZoom
+            
+            // Calculate initial pan position to center the image
+            const scaledWidth = img.width * currentZoom;
+            const scaledHeight = img.height * currentZoom;
+            panX = (canvas.width - scaledWidth) / 2;
+            panY = (canvas.height - scaledHeight) / 2;
+            
+            // Clear the canvas and redraw everything
+            drawCanvas(); // This will handle the zoom and background properly
+            
+            // Update zoom label
+            updateZoomLabel();
+        }
+
 
         // --- Mouse/Touch Event Handlers ---
 
@@ -2112,6 +2266,8 @@
 
             // Check if drawing new shape
             if (drawingMode) {
+                // Show pointer when starting to draw
+                showPointer('createMenuBtn', 'Drag to create');
                 console.log('3. Entering drawing mode logic.');
                 if (drawingMode === 'bubble') {
                     console.log('   Creating new SpeechBubble.');
@@ -2121,32 +2277,14 @@
                     shapes.push(selectedShape);
                 } else if (drawingMode === 'arrow') {
                     console.log('   Creating new Arrow.');
-                    // Calculate arrow endpoints to stay within canvas bounds
-                    const arrowLength = 100;
-                    const arrowAngle = 0; // Horizontal arrow
+                    // Store initial start position
+                    const startX = x;
+                    const startY = y;
                     
-                    // Calculate initial position with margin from edges
-                    const startX = Math.max(10, Math.min(x, canvas.width - arrowLength - 10));
-                    const startY = Math.max(10, Math.min(y, canvas.height - 10));
-                    const endX = startX + arrowLength;
-                    
-                    // Create arrow with calculated endpoints
-                    selectedShape = new Arrow(startX, startY, endX, startY);
+                    // Create arrow with initial position
+                    selectedShape = new Arrow(startX, startY, startX, startY); // Create arrow with zero length initially
+                    selectedShape.flipText = false; // Start without flipping
                     shapes.push(selectedShape);
-                    
-                    // Ensure arrow stays visible by adjusting position if needed
-                    if (endX > canvas.width - 10) {
-                        // If arrow would extend beyond right edge, move it left
-                        const dx = endX - (canvas.width - 10);
-                        selectedShape.x1 -= dx;
-                        selectedShape.x2 -= dx;
-                    }
-                    if (startX < 10) {
-                        // If arrow starts too close to left edge, move it right
-                        const dx = 10 - startX;
-                        selectedShape.x1 += dx;
-                        selectedShape.x2 += dx;
-                    }
                     
                     // Update bounding box immediately
                     selectedShape.updateBoundingBox();
@@ -2159,6 +2297,11 @@
 
             // Check for existing shape interaction (handles or dragging)
             let foundInteraction = false;
+            
+            // Hide pointer when not in drawing mode
+            if (!drawingMode) {
+                hidePointer();
+            }
             // Iterate shapes in reverse order to check top-most first
             for (let i = shapes.length - 1; i >= 0; i--) {
                 const shape = shapes[i];
@@ -2195,21 +2338,10 @@
             }
 
             if (!foundInteraction) {
-                // If no shape was clicked, deselect and start panning (if zoomed in)
+                // If no shape was clicked, just set selectedShape to null
                 selectedShape = null;
-                // Only allow panning if the image is larger than the canvas at the current zoom,
-                // or if no image is loaded (then allow free panning of shapes)
-                const imageRenderedWidth = uploadedImage ? uploadedImage.width * currentZoom : 0;
-                const imageRenderedHeight = uploadedImage ? uploadedImage.height * currentZoom : 0;
-
-                const canPanX = imageRenderedWidth > canvas.width;
-                const canPanY = imageRenderedHeight > canvas.height;
-
-                if (canPanX || canPanY || !uploadedImage) {
-                    isDragging = true; // Use isDragging for panning the canvas
-                } else {
-                    isDragging = false; // Prevent dragging background if image fits entirely
-                }
+                isDragging = true; // Allow panning regardless of zoom level
+                drawCanvas();
             }
             drawCanvas(); // Redraw to show selected state or new shape outline
         }
@@ -2474,24 +2606,64 @@
         }
 
         function handleMouseUp(event) {
-            console.log('5. Mouse up on canvas.');
+            if (debugMessages) console.log('5. Mouse up on canvas.');
             if (drawingMode && isResizing && selectedShape) {
-                // Finalize the new shape if it's too small, remove it
-                if (selectedShape.width < 10 || selectedShape.height < 10) {
-                    shapes.pop(); // Remove the barely drawn shape
-                    selectedShape = null;
-                    console.log('   New shape too small, removed.');
+                // Special handling for arrow creation
+                if (drawingMode === 'arrow') {
+                    const { x, y } = getMousePos(event);
+                    // Update arrow end position and text orientation
+                    selectedShape.x2 = x;
+                    selectedShape.y2 = y;
+
+                    // Calculate arrow angle
+                    const angle = Math.atan2(selectedShape.y2 - selectedShape.y1, selectedShape.x2 - selectedShape.x1);
+                    console.log('Arrow angle:', angle * 180 / Math.PI, 'degrees');
+                    
+                    // Set flipText based on diagonal movement
+                    // Flip text when:
+                    // 1. Moving from lower right to upper left (y1 < y2 AND x2 < x1)
+                    // 2. Moving from upper left to lower right (y1 > y2 AND x2 > x1)
+                    // 3. Moving from lower left to upper right (y1 < y2 AND x2 > x1)
+                    // 4. Moving from upper right to lower left (y1 > y2 AND x2 < x1)
+                    selectedShape.flipText = (selectedShape.y1 < selectedShape.y2 && (selectedShape.x2 - selectedShape.x1) < 0) ||
+                                           (selectedShape.y1 > selectedShape.y2 && (selectedShape.x2 - selectedShape.x1) > 0) ||
+                                           (selectedShape.y1 < selectedShape.y2 && (selectedShape.x2 - selectedShape.x1) > 0) ||
+                                           (selectedShape.y1 > selectedShape.y2 && (selectedShape.x2 - selectedShape.x1) < 0);
+                    console.log('Flip text:', selectedShape.flipText);
+
+                    selectedShape.updateBoundingBox();
+
+                    // If arrow is too small, remove it
+                    if (dist(selectedShape.x1, selectedShape.y1, selectedShape.x2, selectedShape.y2) < 10) {
+                        shapes.pop();
+                        selectedShape = null;
+                        console.log('   Arrow too small, removed.');
+                    } else {
+                        console.log('   Arrow finalized.');
+                        if (isShapeOperationInProgress) {
+                            saveState();
+                            showPointer('canvas', 'Arrow Added!');
+                            isShapeOperationInProgress = false;
+                        }
+                    }
                 } else {
-                    console.log('   New shape finalized.');
-                    if (isShapeOperationInProgress) {
-                        saveState(); // Save state after drawing a new shape
-                        showPointer('canvas', 'New Shape Added!');
-                        isShapeOperationInProgress = false;
+                    // For other shapes, use the existing size check
+                    if (selectedShape.width < 10 || selectedShape.height < 10) {
+                        shapes.pop();
+                        selectedShape = null;
+                        console.log('   Shape too small, removed.');
+                    } else {
+                        console.log('   Shape finalized.');
+                        if (isShapeOperationInProgress) {
+                            saveState();
+                            showPointer('canvas', 'Shape Added!');
+                            isShapeOperationInProgress = false;
+                        }
                     }
                 }
             }
             drawingMode = null;
-            
+
             // If we were moving or rotating an existing shape
             if ((isDragging || isResizing || isRotating || isTailMoving) && selectedShape) {
                 if (isShapeOperationInProgress) {
@@ -2500,7 +2672,7 @@
                     isShapeOperationInProgress = false;
                 }
             }
-            
+
             isDragging = false;
             isResizing = false;
             resizeHandle = null;
@@ -2508,7 +2680,7 @@
             rotationHandle = null;
             isTailMoving = false;
             drawCanvas(); // Final redraw
-            console.log('   Drawing mode reset to:', drawingMode);
+            if (debugMessages) console.log('   Drawing mode reset to:', drawingMode);
         }
 
         /**
@@ -2559,8 +2731,8 @@
                 const tooltipY = containerRect.top + bubbleCenter.y * currentZoom + panY;
                 
                 // Add debugging info
-                console.log('Bubble center:', bubbleCenter);
-                console.log('Tooltip position:', { x: tooltipX, y: tooltipY });
+                if (debugMessages) console.log('Bubble center:', bubbleCenter);
+                if (debugMessages) console.log('Tooltip position:', { x: tooltipX, y: tooltipY });
                 
                 // Ensure tooltip appears above the bubble
                 tooltip.style.left = `${tooltipX}px`;
@@ -2625,7 +2797,21 @@
 
         // Show pointer animation
         function showPointer(buttonId, text) {
-            // Remove any existing pointer first
+            // Hide any existing pointer first
+            hidePointer();
+
+            // Show the pointer in the header instead of creating a new one
+            const headerPointer = document.querySelector('#bubblePointer');
+            if (headerPointer) {
+                headerPointer.classList.remove('hidden');
+                const pointerText = headerPointer.querySelector('.pointer-text');
+                if (pointerText) {
+                    pointerText.textContent = text;
+                }
+                return;
+            }
+
+            // Fallback to original behavior if header pointer not found
             const existingPointer = document.querySelector('.pointer-overlay');
             if (existingPointer) {
                 existingPointer.remove();
@@ -2810,10 +2996,6 @@
                         }
                     })),
                     zoom: currentZoom,
-                    pan: {
-                        x: canvasContainer ? canvasContainer.scrollLeft : 0,
-                        y: canvasContainer ? canvasContainer.scrollTop : 0
-                    }
                 };
 
                 const jsonString = JSON.stringify(canvasState, null, 2);
@@ -2835,315 +3017,380 @@
             }
         }
 
-// --- Keyboard Events ---
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Control') {
-        isCtrlPressed = true;
-        // Redraw canvas immediately to show handles
-        drawCanvas();
-    }
-});
+		// --- Keyboard Events ---
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Control') {
+				isCtrlPressed = true;
+				// Redraw canvas immediately to show handles
+				drawCanvas();
+			}
+		});
 
-document.addEventListener('keyup', (e) => {
-    if (e.key === 'Control') {
-        isCtrlPressed = false;
-        // Redraw canvas immediately to hide handles
-        drawCanvas();
-    }
-});
+		document.addEventListener('keyup', (e) => {
+			if (e.key === 'Control') {
+				isCtrlPressed = false;
+				// Redraw canvas immediately to hide handles
+				drawCanvas();
+			}
+		});
 
-// --- File Operations ---
-exportToFileBtn.addEventListener('click', () => {
-    const state = {
-        shapes: shapes.map(shape => ({
-            type: shape.constructor.name,
-            data: {
-                x: shape.x,
-                y: shape.y,
-                width: shape.width,
-                height: shape.height,
-                rotation: shape.rotation,
-                fillColor: shape.fillColor,
-                fillTransparency: shape.fillTransparency,
-                borderColor: shape.borderColor,
-                borderTransparency: shape.borderTransparency,
-                borderWidth: shape.borderWidth,
-                ...(shape instanceof SpeechBubble && {
-                    text: shape.text,
-                    fontSize: shape.fontSize,
-                    fontFamily: shape.fontFamily,
-                    textColor: shape.textColor,
-                    tailX: shape.tailX,
-                    tailY: shape.tailY,
-                    tailBaseSide: shape.tailBaseSide,
-                    tailBaseAlignment: shape.tailBaseAlignment,
-                    paddingX: shape.paddingX,
-                    paddingY: shape.paddingY,
-                    cornerRadius: shape.cornerRadius,
-                    flipText: shape.flipText,
-                    tailBaseWidth: shape.tailBaseWidth
-                }),
-                ...(shape instanceof Arrow && {
-                    x1: shape.x1,
-                    y1: shape.y1,
-                    x2: shape.x2,
-                    y2: shape.y2,
-                    text: shape.text,
-                    fontSize: shape.fontSize,
-                    fontFamily: shape.fontFamily,
-                    textColor: shape.textColor,
-                    textBackgroundColor: shape.textBackgroundColor,
-                    lineWidth: shape.lineWidth,
-                    headSize: shape.headSize,
-                    paddingX: shape.paddingX,
-                    paddingY: shape.paddingY,
-                    flipText: shape.flipText
-                })
+        // Export canvas state to a JSON file
+        function exportToFile() {
+            try {
+                // Prompt for a filename
+                let fileName = prompt("Please enter a name for your project file:", "bubbleup-project");
+                if (fileName === null || fileName.trim() === "") {
+                    console.log("Export cancelled by user.");
+                    return; // Abort if user cancels or enters an empty name
+                }
+
+                // Ensure the filename ends with .json
+                if (!fileName.toLowerCase().endsWith('.json')) {
+                    fileName += '.json';
+                }
+
+                const canvasState = {
+                    image: uploadedImage ? uploadedImage.src : null,
+                    shapes: shapes.map(shape => ({
+                        type: shape.constructor.name,
+                        properties: {
+                            x: shape.x,
+                            y: shape.y,
+                            width: shape.width,
+                            height: shape.height,
+                            rotation: shape.rotation,
+                            fillColor: shape.fillColor,
+                            fillTransparency: shape.fillTransparency,
+                            borderColor: shape.borderColor,
+                            borderTransparency: shape.borderTransparency,
+                            borderWidth: shape.borderWidth,
+                            ...(shape instanceof SpeechBubble && {
+                                text: shape.text,
+                                fontSize: shape.fontSize,
+                                fontFamily: shape.fontFamily,
+                                textColor: shape.textColor,
+                                tailX: shape.tailX,
+                                tailY: shape.tailY,
+                                tailBaseSide: shape.tailBaseSide,
+                                tailBaseAlignment: shape.tailBaseAlignment,
+                                paddingX: shape.paddingX,
+                                paddingY: shape.paddingY,
+                                cornerRadius: shape.cornerRadius,
+                                flipText: shape.flipText,
+                                tailBaseWidth: shape.tailBaseWidth
+                            }),
+                            ...(shape instanceof Arrow && {
+                                x1: shape.x1,
+                                y1: shape.y1,
+                                x2: shape.x2,
+                                y2: shape.y2,
+                                text: shape.text,
+                                fontSize: shape.fontSize,
+                                fontFamily: shape.fontFamily,
+                                textColor: shape.textColor,
+                                textBackgroundColor: shape.textBackgroundColor,
+                                lineWidth: shape.lineWidth,
+                                headSize: shape.headSize,
+                                paddingX: shape.paddingX,
+                                paddingY: shape.paddingY,
+                                flipText: shape.flipText
+                            })
+                        }
+                    })),
+                    zoom: currentZoom,
+                    panX: panX,
+                    panY: panY
+                };
+
+                const jsonString = JSON.stringify(canvasState, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName; // Use the user-provided filename
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showPointer('exportToFileBtn', 'Exported to file!');
+            } catch (error) {
+                console.error('Error exporting canvas state:', error);
+                alert('Error exporting canvas state: ' + error.message);
             }
-        })).filter(shape => shape !== null),
-        zoom: currentZoom,
-        panX: panX,
-        panY: panY,
-        historyLength: history.length,
-        currentIndex: currentHistoryIndex
-    };
+        }
 
-    // Save to file
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'canvas-state.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-});
 
-// --- Bubble Editor ---
-applyBubbleBtn.addEventListener('click', () => {
-    if (selectedShape) {
-        selectedShape.text = bubbleText.value;
-        selectedShape.fontSize = parseInt(bubbleFontSize.value) || 14;
-        selectedShape.fontFamily = bubbleFont.value;
-        selectedShape.textColor = bubbleTextColor.value;
-        selectedShape.fillColor = bubbleFill.value;
-        selectedShape.fillTransparency = parseFloat(bubbleFillTransparency.value) || 1;
-        selectedShape.borderColor = bubbleBorderColor.value;
-        selectedShape.borderTransparency = parseFloat(bubbleBorderTransparency.value) || 1;
-        selectedShape.borderWidth = parseInt(bubbleBorderWidth.value) || 1;
-        selectedShape.tailBaseSide = bubbleTailSide.value;
-        selectedShape.tailBaseAlignment = bubbleTailAlignment.value;
-        
-        // Update tail position based on new properties
-        selectedShape.updateTailTipPosition();
-        
-        // Save the state after applying changes
-        saveState();
-        
-        // Update UI
-        drawCanvas();
-        showPointer('applyBubbleBtn', 'Bubble Updated!');
-    }
-});
+        // Main function to apply a state object to the canvas
+        function applyState(state) {
+            shapes.length = 0;
+            uploadedImage = null;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-// Function to save current state to history
-function saveState() {
-    // Create state snapshot
-    const state = {
-        shapes: shapes.map(shape => ({
-            type: shape.constructor.name,
-            data: {
-                x: shape.x,
-                y: shape.y,
-                width: shape.width,
-                height: shape.height,
-                rotation: shape.rotation,
-                fillColor: shape.fillColor,
-                fillTransparency: shape.fillTransparency,
-                borderColor: shape.borderColor,
-                borderTransparency: shape.borderTransparency,
-                borderWidth: shape.borderWidth,
-                ...(shape instanceof SpeechBubble && {
-                    text: shape.text,
-                    fontSize: shape.fontSize,
-                    fontFamily: shape.fontFamily,
-                    textColor: shape.textColor,
-                    tailX: shape.tailX,
-                    tailY: shape.tailY,
-                    tailBaseSide: shape.tailBaseSide,
-                    tailBaseAlignment: shape.tailBaseAlignment,
-                    paddingX: shape.paddingX,
-                    paddingY: shape.paddingY,
-                    cornerRadius: shape.cornerRadius,
-                    flipText: shape.flipText,
-                    tailBaseWidth: shape.tailBaseWidth
-                }),
-                ...(shape instanceof Arrow && {
-                    x1: shape.x1,
-                    y1: shape.y1,
-                    x2: shape.x2,
-                    y2: shape.y2,
-                    text: shape.text,
-                    fontSize: shape.fontSize,
-                    fontFamily: shape.fontFamily,
-                    textColor: shape.textColor,
-                    textBackgroundColor: shape.textBackgroundColor,
-                    textBackgroundTransparency: shape.textBackgroundTransparency,
-                    textAlignment: shape.textAlignment,
-                    paddingX: shape.paddingX,
-                    paddingY: shape.paddingY,
-                    lineWidth: shape.lineWidth,
-                    lineTransparency: shape.lineTransparency,
-                    headSize: shape.headSize,
-                    headTransparency: shape.headTransparency,
-                    flipText: shape.flipText
-                })
+            const loadImageAndRestore = () => {
+                if (state.shapes && Array.isArray(state.shapes)) {
+                    shapes.push(...state.shapes.map(shapeData => {
+                        const ShapeClass = window.shapeClasses[shapeData.type];
+                        if (!ShapeClass) {
+                            console.error('Shape class not found:', shapeData.type);
+                            return null;
+                        }
+                        const shape = new ShapeClass();
+                        Object.assign(shape, shapeData.properties);
+                        return shape;
+                    }).filter(shape => shape !== null));
+                }
+                currentZoom = state.zoom || 1;
+                panX = state.panX || 0;
+                panY = state.panY || 0;
+
+                updateZoomLabel();
+                drawCanvas();
+                console.log('Canvas state restored successfully.');
+            };
+
+            if (state.image) {
+                const img = new Image();
+                img.onload = () => {
+                    uploadedImage = img;
+                    loadImageAndRestore();
+                };
+                img.onerror = () => {
+                    console.error("Failed to load image from state.");
+                    alert("Error: The saved image could not be loaded.");
+                    loadImageAndRestore(); // Still load shapes
+                };
+                img.src = state.image;
+            } else {
+                loadImageAndRestore();
             }
-        })),
-        image: uploadedImage ? {
-            src: uploadedImage.src,
-            width: uploadedImage.width,
-            height: uploadedImage.height
-        } : null,
-        zoom: currentZoom,
-        pan: {
-            x: canvasContainer ? canvasContainer.scrollLeft : 0,
-            y: canvasContainer ? canvasContainer.scrollTop : 0
-        },
-        historyLength: history.length,
-        currentIndex: currentHistoryIndex
-    };
+        }
 
-    // If we're not at the end of history, clear future states
-    if (currentHistoryIndex < history.length - 1) {
-        history.length = currentHistoryIndex + 1;
-    }
-
-    // Only save state if it's different from the previous state
-    if (currentHistoryIndex === 0 || 
-        JSON.stringify(state) !== JSON.stringify(history[currentHistoryIndex - 1])) {
-        history.push(state);
-        currentHistoryIndex++;
-        console.log('State saved:', {
-            shapesCount: state.shapes.length,
-            zoom: state.zoom,
-            pan: state.pan,
-            historyLength: history.length,
-            currentIndex: currentHistoryIndex
+		// --- File Operations ---
+        exportToFileBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            exportToFile();
+            fileMenuDropdown.classList.add('hidden');
         });
-    }
-}
 
-// Function to restore a saved state
-function restoreState(state) {
-    // Restore shapes
-    shapes = state.shapes.map(savedShape => {
-        const ShapeClass = window.shapeClasses[savedShape.type];
-        const shape = new ShapeClass();
-        Object.assign(shape, savedShape.data);
-        
-        // For SpeechBubble, update tail position based on new properties
-        if (shape instanceof SpeechBubble) {
-            shape.updateTailTipPosition();
-        }
-        
-        // For Arrow, update bounding box based on new points
-        if (shape instanceof Arrow) {
-            shape.updateBoundingBox();
-        }
-        
-        return shape;
-    });
+		// --- Bubble Editor ---
+		applyBubbleBtn.addEventListener('click', () => {
+			if (selectedShape) {
+				selectedShape.text = bubbleText.value;
+				selectedShape.fontSize = parseInt(bubbleFontSize.value) || 14;
+				selectedShape.fontFamily = bubbleFont.value;
+				selectedShape.textColor = bubbleTextColor.value;
+				selectedShape.fillColor = bubbleFill.value;
+				selectedShape.fillTransparency = parseFloat(bubbleFillTransparency.value) || 1;
+				selectedShape.borderColor = bubbleBorderColor.value;
+				selectedShape.borderTransparency = parseFloat(bubbleBorderTransparency.value) || 1;
+				selectedShape.borderWidth = parseInt(bubbleBorderWidth.value) || 1;
+				selectedShape.tailBaseSide = bubbleTailSide.value;
+				selectedShape.tailBaseAlignment = bubbleTailAlignment.value;
+				
+				// Update tail position based on new properties
+				selectedShape.updateTailTipPosition();
+				
+				// Save the state after applying changes
+				saveState();
+				
+				// Update UI
+				drawCanvas();
+				showPointer('applyBubbleBtn', 'Bubble Updated!');
+			}
+		});
 
-    // Restore image state
-    if (state.image) {
-        // Always create a new image to ensure we have a fresh copy
-        const img = new Image();
-        img.src = state.image.data || state.image.src; // Try saved data first, then fallback to original src
-        img.onload = () => {
-            uploadedImage = img;
-            // Update canvas size if image dimensions changed
-            if (canvas.width !== img.width || canvas.height !== img.height) {
-                canvas.width = img.width;
-                canvas.height = img.height;
-            }
-            
-            // Restore zoom and pan
-            currentZoom = state.zoom;
-            if (canvasContainer) {
-                canvasContainer.scrollLeft = state.pan.x;
-                canvasContainer.scrollTop = state.pan.y;
-            }
-            
-            // Redraw canvas
-            drawCanvas();
-        };
-        img.onerror = () => {
-            console.error('Failed to load image:', state.image.src);
-            uploadedImage = null;
-            drawCanvas();
-        };
-    } else {
-        // Clear image if we had one before
-        if (uploadedImage) {
-            uploadedImage = null;
-            canvas.width = canvas.width; // Clear canvas
-            drawCanvas();
-        }
-    }
 
-    // Restore zoom and pan
-    currentZoom = state.zoom;
-    if (canvasContainer) {
-        canvasContainer.scrollLeft = state.pan.x;
-        canvasContainer.scrollTop = state.pan.y;
-    }
-    
-    console.log('State restored:', {
-        shapesCount: shapes.length,
-        zoom: currentZoom,
-        pan: {
-            x: canvasContainer ? canvasContainer.scrollLeft : 0,
-            y: canvasContainer ? canvasContainer.scrollTop : 0
-        },
-        historyLength: history.length,
-        currentIndex: currentHistoryIndex
-    });
-}
+        // Quick Save/Restore State
+        let quickSaveData = null;
+        let lastQuickSaveTime = null;
 
-// Function to undo the last action
-function undo() {
-    if (currentHistoryIndex > 0) {
-        currentHistoryIndex--;
-        const state = history[currentHistoryIndex];
-        restoreState(state);
-        // Update the canvas immediately without pointer animation
-        drawCanvas();
-    } else {
-        console.log('No more undos available');
-    }
-}
+		// Function to save current state to history
+		function saveState() {
+			// Create state snapshot
+			const state = {
+				shapes: shapes.map(shape => ({
+					type: shape.constructor.name,
+					data: {
+						x: shape.x,
+						y: shape.y,
+						width: shape.width,
+						height: shape.height,
+						rotation: shape.rotation,
+						fillColor: shape.fillColor,
+						fillTransparency: shape.fillTransparency,
+						borderColor: shape.borderColor,
+						borderTransparency: shape.borderTransparency,
+						borderWidth: shape.borderWidth,
+						...(shape instanceof SpeechBubble && {
+							text: shape.text,
+							fontSize: shape.fontSize,
+							fontFamily: shape.fontFamily,
+							textColor: shape.textColor,
+							tailX: shape.tailX,
+							tailY: shape.tailY,
+							tailBaseSide: shape.tailBaseSide,
+							tailBaseAlignment: shape.tailBaseAlignment,
+							paddingX: shape.paddingX,
+							paddingY: shape.paddingY,
+							cornerRadius: shape.cornerRadius,
+							flipText: shape.flipText,
+							tailBaseWidth: shape.tailBaseWidth
+						}),
+						...(shape instanceof Arrow && {
+							x1: shape.x1,
+							y1: shape.y1,
+							x2: shape.x2,
+							y2: shape.y2,
+							text: shape.text,
+							fontSize: shape.fontSize,
+							fontFamily: shape.fontFamily,
+							textColor: shape.textColor,
+							textBackgroundColor: shape.textBackgroundColor,
+							textBackgroundTransparency: shape.textBackgroundTransparency,
+							textAlignment: shape.textAlignment,
+							paddingX: shape.paddingX,
+							paddingY: shape.paddingY,
+							lineWidth: shape.lineWidth,
+							lineTransparency: shape.lineTransparency,
+							headSize: shape.headSize,
+							headTransparency: shape.headTransparency,
+							flipText: shape.flipText
+						})
+					}
+				})),
+				image: uploadedImage ? {
+					src: uploadedImage.src,
+					width: uploadedImage.width,
+					height: uploadedImage.height
+				} : null,
+				zoom: currentZoom,
+				historyLength: history.length,
+				currentIndex: currentHistoryIndex
+			};
 
-// Function to redo the last undone action
-function redo() {
-    if (currentHistoryIndex < history.length - 1) {
-        currentHistoryIndex++;
-        const state = history[currentHistoryIndex];
-        restoreState(state);
-        // Update the canvas immediately without pointer animation
-        drawCanvas();
-    } else {
-        console.log('No more redos available');
-    }
-}
+			// If we're not at the end of history, clear future states
+			if (currentHistoryIndex < history.length - 1) {
+				history.length = currentHistoryIndex + 1;
+			}
 
-// Add event listeners for undo/redo
-if (undoBtn) {
-    undoBtn.addEventListener('click', undo);
-} else {
-    console.error('Undo Button not found!');
-}
+			// Only save state if it's different from the previous state
+			if (currentHistoryIndex === 0 || 
+				JSON.stringify(state) !== JSON.stringify(history[currentHistoryIndex - 1])) {
+				history.push(state);
+				currentHistoryIndex++;
+				console.log('State saved:', {
+					shapesCount: state.shapes.length,
+					zoom: state.zoom,
+					pan: state.pan,
+					historyLength: history.length,
+					currentIndex: currentHistoryIndex
+				});
+			}
+		}
+
+		// Function to restore a saved state
+		function restoreState(state) {
+			// Restore shapes
+			shapes = state.shapes.map(savedShape => {
+				const ShapeClass = window.shapeClasses[savedShape.type];
+				const shape = new ShapeClass();
+				Object.assign(shape, savedShape.data);
+				
+				// For SpeechBubble, update tail position based on new properties
+				if (shape instanceof SpeechBubble) {
+					shape.updateTailTipPosition();
+				}
+				
+				// For Arrow, update bounding box based on new points
+				if (shape instanceof Arrow) {
+					shape.updateBoundingBox();
+				}
+				
+				return shape;
+			});
+
+			// Restore image state
+			if (state.image) {
+				const img = new Image();
+				img.src = state.image.data || state.image.src;
+				img.onload = () => {
+					uploadedImage = img;
+					// Clear canvas without changing size
+					ctx.clearRect(0, 0, canvas.width, canvas.height);
+					
+					// Restore zoom and pan only if they exist
+					currentZoom = state.zoom;
+					if (state.pan && canvasContainer) {
+						canvasContainer.scrollLeft = state.pan.x;
+						canvasContainer.scrollTop = state.pan.y;
+					}
+					
+					drawCanvas();
+				};
+				img.onerror = () => {
+					console.error('Failed to load image:', state.image.src);
+					uploadedImage = null;
+					drawCanvas();
+				};
+			} else {
+				// Clear image if we had one before
+				if (uploadedImage) {
+					uploadedImage = null;
+					ctx.clearRect(0, 0, canvas.width, canvas.height);
+					drawCanvas();
+				}
+			}
+
+			console.log('State restored:', {
+				shapesCount: shapes.length,
+				zoom: currentZoom,
+				pan: {
+					x: canvasContainer ? canvasContainer.scrollLeft : 0,
+					y: canvasContainer ? canvasContainer.scrollTop : 0
+				},
+				historyLength: history.length,
+				currentIndex: currentHistoryIndex
+			});
+		}
+
+		// Function to undo the last action
+		function undo() {
+			if (currentHistoryIndex > 0) {
+				// Clear future states before undoing
+				if (currentHistoryIndex < history.length - 1) {
+					history.length = currentHistoryIndex;
+				}
+				currentHistoryIndex--;
+				const state = history[currentHistoryIndex];
+				restoreState(state);
+				// Update the canvas immediately without pointer animation
+				drawCanvas();
+			} else {
+				console.log('No more undos available');
+			}
+		}
+
+		// Function to redo the last undone action
+		function redo() {
+			if (currentHistoryIndex < history.length - 1) {
+				currentHistoryIndex++;
+				const state = history[currentHistoryIndex];
+				restoreState(state);
+				// Update the canvas immediately without pointer animation
+				drawCanvas();
+			} else {
+				console.log('No more redos available');
+			}
+		}
+
+		// Add event listeners for undo/redo
+		if (undoBtn) {
+			undoBtn.addEventListener('click', undo);
+		} else {
+			console.error('Undo Button not found!');
+		}
 
         if (redoBtn) {
             redoBtn.addEventListener('click', redo);
@@ -3357,86 +3604,90 @@ if (undoBtn) {
 
         // Paste arrow button
         const pasteArrowBtn = document.getElementById('pasteArrowBtn');
-        pasteArrowBtn.addEventListener('click', () => {
-            if (!copiedArrow) {
-                alert('No arrow properties copied yet! Please copy an arrow first.');
-                return;
+        if (pasteArrowBtn) {
+            pasteArrowBtn.addEventListener('click', () => {
+                if (!copiedArrow) {
+                    alert('No arrow properties copied yet! Please copy an arrow first.');
+                    return;
+                }
+                
+                // Get current mouse position or use center
+                const mousePos = getMousePos({ clientX: canvas.width / 2, clientY: canvas.height / 2 });
+                
+                // Calculate new arrow endpoints based on original direction
+                const dx = copiedArrow.x2 - copiedArrow.x1;
+                const dy = copiedArrow.y2 - copiedArrow.y1;
+                const newArrow = new Arrow(
+                    mousePos.x,
+                    mousePos.y,
+                    mousePos.x + dx,
+                    mousePos.y + dy,
+                    copiedArrow.text || '',
+                    copiedArrow.fontSize || 16,
+                    copiedArrow.fontFamily || 'Inter',
+                    copiedArrow.textColor || '#000000'
+                );
+                
+                // Copy all arrow properties
+                const propertiesToCopy = {
+                    text: copiedArrow.text || '',
+                    fontSize: copiedArrow.fontSize || 16,
+                    fontFamily: copiedArrow.fontFamily || 'Inter',
+                    textColor: copiedArrow.textColor || '#000000',
+                    fillColor: copiedArrow.fillColor || '#ffffff',
+                    fillTransparency: copiedArrow.fillTransparency !== undefined ? parseFloat(copiedArrow.fillTransparency) : 1,
+                    borderColor: copiedArrow.borderColor || '#000000',
+                    borderTransparency: copiedArrow.borderTransparency !== undefined ? parseFloat(copiedArrow.borderTransparency) : 1,
+                    borderWidth: copiedArrow.borderWidth !== undefined ? parseFloat(copiedArrow.borderWidth) : 2,
+                    lineWidth: copiedArrow.lineWidth !== undefined ? parseFloat(copiedArrow.lineWidth) : 2,
+                    headSize: copiedArrow.headSize !== undefined ? parseFloat(copiedArrow.headSize) : 10,
+                    paddingX: copiedArrow.paddingX !== undefined ? parseFloat(copiedArrow.paddingX) : 10,
+                    paddingY: copiedArrow.paddingY !== undefined ? parseFloat(copiedArrow.paddingY) : 5,
+                    flipText: copiedArrow.flipText || false,
+                    rotation: copiedArrow.rotation !== undefined ? parseFloat(copiedArrow.rotation) : 0
+                };
+                
+                // Set colors explicitly
+                newArrow.fillColor = propertiesToCopy.fillColor;
+                newArrow.fillTransparency = propertiesToCopy.fillTransparency;
+                newArrow.textColor = propertiesToCopy.textColor;
+                
+                // Set text background color
+                newArrow.textBackgroundColor = propertiesToCopy.fillColor;
+                newArrow.textBackgroundTransparency = propertiesToCopy.fillTransparency;
+                
+                // Update arrow properties
+                newArrow.updateFromEditor(propertiesToCopy);
+                
+                // Add to shapes array
+                shapes.push(newArrow);
+                
+                // Select and open editor
+                selectedShape = newArrow;
+                openArrowEditor(newArrow);
+                
+                // Redraw canvas
+                drawCanvas();
+                
+                // Visual feedback
+                pasteArrowBtn.style.backgroundColor = '#3b82f6'; // Change to success blue
+                setTimeout(() => {
+                    pasteArrowBtn.style.backgroundColor = ''; // Reset color
+                }, 1000);
+                
+                console.log('Pasted arrow with properties:', newArrow);
+            });
+        }
+
+        // Handle image selection
+        chooseImageBtn.addEventListener('click', () => {
+            if (!isProcessingFile) {
+                isProcessingFile = true;
+                imageInput.click();
             }
-            
-            // Get current mouse position or use center
-            const mousePos = getMousePos({ clientX: canvas.width / 2, clientY: canvas.height / 2 });
-            
-            // Calculate new arrow endpoints based on original direction
-            const dx = copiedArrow.x2 - copiedArrow.x1;
-            const dy = copiedArrow.y2 - copiedArrow.y1;
-            const newArrow = new Arrow(
-                mousePos.x,
-                mousePos.y,
-                mousePos.x + dx,
-                mousePos.y + dy,
-                copiedArrow.text || '',
-                copiedArrow.fontSize || 16,
-                copiedArrow.fontFamily || 'Inter',
-                copiedArrow.textColor || '#000000'
-            );
-            
-            // Copy all arrow properties, ensuring colors are properly copied
-            const propertiesToCopy = {
-                text: copiedArrow.text || '',
-                fontSize: copiedArrow.fontSize || 16,
-                fontFamily: copiedArrow.fontFamily || 'Inter',
-                textColor: copiedArrow.textColor || '#000000',
-                fillColor: copiedArrow.fillColor || '#ffffff',
-                fillTransparency: copiedArrow.fillTransparency !== undefined ? parseFloat(copiedArrow.fillTransparency) : 1,
-                borderColor: copiedArrow.borderColor || '#000000',
-                borderTransparency: copiedArrow.borderTransparency !== undefined ? parseFloat(copiedArrow.borderTransparency) : 1,
-                borderWidth: copiedArrow.borderWidth !== undefined ? parseFloat(copiedArrow.borderWidth) : 2,
-                lineWidth: copiedArrow.lineWidth !== undefined ? parseFloat(copiedArrow.lineWidth) : 2,
-                headSize: copiedArrow.headSize !== undefined ? parseFloat(copiedArrow.headSize) : 10,
-                paddingX: copiedArrow.paddingX !== undefined ? parseFloat(copiedArrow.paddingX) : 10,
-                paddingY: copiedArrow.paddingY !== undefined ? parseFloat(copiedArrow.paddingY) : 5,
-                flipText: copiedArrow.flipText || false,
-                rotation: copiedArrow.rotation !== undefined ? parseFloat(copiedArrow.rotation) : 0
-            };
-            
-            // Set colors explicitly before updateFromEditor
-            newArrow.fillColor = propertiesToCopy.fillColor;
-            newArrow.fillTransparency = propertiesToCopy.fillTransparency;
-            newArrow.textColor = propertiesToCopy.textColor; // Ensure text color is copied
-            
-            // Set the text background color explicitly
-            newArrow.textBackgroundColor = propertiesToCopy.fillColor;
-            newArrow.textBackgroundTransparency = propertiesToCopy.fillTransparency;
-            
-            // Update the arrow with copied properties
-            newArrow.updateFromEditor(propertiesToCopy);
-            
-            // Update the arrow with copied properties
-            newArrow.updateFromEditor(propertiesToCopy);
-            
-            // Add to shapes array
-            shapes.push(newArrow);
-            
-            // Select and open editor
-            selectedShape = newArrow;
-            openArrowEditor(newArrow);
-            
-            // Redraw canvas
-            drawCanvas();
-            
-            // Visual feedback
-            pasteArrowBtn.style.backgroundColor = '#3b82f6'; // Change to success blue
-            setTimeout(() => {
-                pasteArrowBtn.style.backgroundColor = ''; // Reset color
-            }, 1000);
-            
-            console.log('Pasted arrow with properties:', newArrow);
         });
 
-        uploadImageBtn.addEventListener('click', () => {
-            imageInput.click(); // Trigger hidden file input click
-        });
-
+        // Handle image input change
         imageInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
@@ -3444,60 +3695,15 @@ if (undoBtn) {
                 reader.onload = (e) => {
                     const img = new Image();
                     img.onload = () => {
-                        // First, clear any existing state
-                        shapes = [];
-                        selectedShape = null;
-                        drawingMode = null;
-                        isDragging = false;
-                        isResizing = false;
-                        isRotating = false;
-                        resizeHandle = null;
-                        rotationHandle = null;
-                        isTailMoving = false;
-                        
-                        // Update the image
+                        // Reset image input to allow re-selection of same file
+                        imageInput.value = '';
+                        isProcessingFile = false;
+                        // Update canvas with new image
                         uploadedImage = img;
-                        
-                        // Reset zoom and pan to defaults
-                        currentZoom = 1;
-                        panX = 0;
-                        panY = 0;
-                        
-                        // Calculate optimal zoom level to fit image in canvas
-                        const canvasWidth = canvas.width;
-                        const canvasHeight = canvas.height;
-                        const imageAspectRatio = img.width / img.height;
-                        const canvasAspectRatio = canvasWidth / canvasHeight;
-                        
-                        let zoomX = canvasWidth / img.width;
-                        let zoomY = canvasHeight / img.height;
-                        let finalZoom = Math.min(zoomX, zoomY) * 0.95; // Leave a small margin
-                        
-                        // Calculate pan position to center the image
-                        const imageWidth = img.width * finalZoom;
-                        const imageHeight = img.height * finalZoom;
-                        panX = (canvasWidth - imageWidth) / 2;
-                        panY = (canvasHeight - imageHeight) / 2;
-                        
-                        // Update zoom and pan
-                        currentZoom = finalZoom;
-                        
-                        // Save state after all changes are made
+                        resetCanvas();
+                        drawImage(img);
+                        // Save the initial state after image is loaded
                         saveState();
-                        
-                        // Redraw canvas with all changes
-                        drawCanvas();
-                        
-                        // Reset the file input to allow loading another image
-                        imageInput.value = '';
-                    };
-                    img.onerror = () => {
-                        console.error('Failed to load image:', e.target.result);
-                        uploadedImage = null;
-                        saveState();
-                        drawCanvas();
-                        // Reset the file input on error too
-                        imageInput.value = '';
                     };
                     img.src = e.target.result;
                 };
@@ -3505,8 +3711,28 @@ if (undoBtn) {
             }
         });
 
+        // Initialize the menu state
+        createMenuDropdown.classList.add('hidden');
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!createMenuDropdown.contains(e.target) && !createMenuBtn.contains(e.target)) {
+                createMenuDropdown.classList.add('hidden');
+            }
+        });
+
+        // Prevents Flash of Unstyled Content (FOUC) by waiting for all resources to load
+        window.addEventListener('load', () => {
+            document.body.style.opacity = '1';
+        });
+
+        updateZoomLabel();
+
         // Create Bubble button handler
         createBubbleBtn.addEventListener('click', () => {
+            // Show pointer animation
+            showPointer('createBubbleBtn', 'Drag to Create Speech Bubble');
+            
             console.log('1. Create Bubble button clicked.');
             drawingMode = 'bubble';
             selectedShape = null; // Deselect any existing shape
@@ -3519,14 +3745,135 @@ if (undoBtn) {
             canvas.style.cursor = 'crosshair';
             console.log('   drawingMode set to:', drawingMode);
             drawCanvas();
+            createMenuDropdown.classList.add('hidden'); // Close dropdown after selection
         });
+    drawCanvas();
+    
+    // Visual feedback
+    pasteBubbleBtn.style.backgroundColor = '#3b82f6'; // Change to success blue
+    setTimeout(() => {
+        pasteBubbleBtn.style.backgroundColor = ''; // Reset color
+    }, 1000);
+    
+// Add logging to track if the event listener is being added multiple times
+console.log('Adding event listener to chooseImageBtn');
 
-        // Create Arrow button handler
-        createArrowBtn.addEventListener('click', () => {
-            drawingMode = 'arrow';
-            selectedShape = null; // Deselect any existing shape
-            canvas.style.cursor = 'crosshair';
+// Define event handlers as named functions
+const chooseImageBtnClickHandler = () => {
+    console.log('Choose Image menu button clicked');
+    console.log('Current imageInput value:', imageInput.value);
+    
+    // Prevent processing if we're already processing a file
+    if (!isProcessingFile) {
+        isProcessingFile = true;
+        imageInput.click();
+    }
+};
+
+const imageInputChangeHandler = (event) => {
+    console.log('File input change event triggered');
+    const file = event.target.files[0];
+    if (file) {
+        console.log('File selected:', file.name);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                console.log('Image loaded successfully');
+                // Reset file input and processing flag
+                imageInput.value = '';
+                isProcessingFile = false;
+                // First, clear any existing state
+                shapes = [];
+                selectedShape = null;
+                drawingMode = null;
+                isDragging = false;
+                isResizing = false;
+                isRotating = false;
+                resetCanvas();
+                drawImage(img);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    if (!createMenuDropdown.contains(e.target) && !createMenuBtn.contains(e.target)) {
+        createMenuDropdown.classList.add('hidden');
+    }
+});
+
+// Toggle dropdown on menu button click
+createMenuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    createMenuDropdown.classList.toggle('hidden');
+});
+
+// Create Bubble button handler
+createBubbleBtn.addEventListener('click', () => {
+    console.log('1. Create Bubble button clicked.');
+    drawingMode = 'bubble';
+    selectedShape = null; // Deselect any existing shape
+    isDragging = false;
+    isResizing = false;
+    isRotating = false;
+    resizeHandle = null;
+    rotationHandle = null;
+    isTailMoving = false;
+    canvas.style.cursor = 'crosshair';
+    console.log('   drawingMode set to:', drawingMode);
+    drawCanvas();
+    createMenuDropdown.classList.add('hidden'); // Close dropdown after selection
+});
+
+// Prevents Flash of Unstyled Content (FOUC) by waiting for all resources to load
+window.addEventListener('load', () => {
+    document.body.style.opacity = '1';
+});
+
+updateZoomLabel();
+
+// Create Bubble button handler
+createBubbleBtn.addEventListener('click', () => {
+    console.log('1. Create Bubble button clicked.');
+    drawingMode = 'bubble';
+    selectedShape = null; // Deselect any existing shape
+    isDragging = false;
+    isResizing = false;
+    isRotating = false;
+    resizeHandle = null;
+    rotationHandle = null;
+    isTailMoving = false;
+    canvas.style.cursor = 'crosshair';
+    console.log('   drawingMode set to:', drawingMode);
+    drawCanvas();
+    createMenuDropdown.classList.add('hidden'); // Close dropdown after selection
+});
+
+saveImageBtn.addEventListener('click', function() {
+    if (!uploadedImage) {
+        alert('No image uploaded yet!');
+        return;
+    }
+
+    // Create a temporary canvas with the same size as the original image
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = uploadedImage.width;
+    tempCanvas.height = uploadedImage.height;
+    const tempCtx = tempCanvas.getContext('2d');
+
+    // Draw only the image area
+    tempCtx.drawImage(uploadedImage, 0, 0);
+
+    // Draw shapes on top of the image
+    shapes.forEach(shape => {
+        shape.draw(tempCtx, false, false); // Don't show selection handles or Ctrl features
+    });
             drawCanvas();
+            createMenuDropdown.classList.add('hidden'); // Close dropdown after selection
         });
 
         saveImageBtn.addEventListener('click', function() {
@@ -3646,6 +3993,11 @@ if (undoBtn) {
         function openBubbleEditor(bubble) {
             // Get all the form elements
             const bubbleText = document.getElementById('bubbleText');
+            // Make bubble text input resizable
+            bubbleText.style.resize = 'both';
+            bubbleText.style.minHeight = '50px';
+            bubbleText.style.minWidth = '200px';
+            bubbleText.style.overflow = 'auto';
             const bubbleFontSize = document.getElementById('bubbleFontSize');
             const bubbleFont = document.getElementById('bubbleFont');
             const bubbleFill = document.getElementById('bubbleFill');
